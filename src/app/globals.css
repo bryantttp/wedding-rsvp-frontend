@@ -1,0 +1,271 @@
+@import "tailwindcss";
+
+/* Pooh “honey + paper” theme */
+:root {
+  --pooh-cream: #fff8e7;
+  --pooh-paper: #fff3d6;
+  --pooh-honey: #f6c453;
+  --pooh-honey-dark: #eab543;
+  --pooh-brown: #5a3e2b;
+  --pooh-red: #b83a2d;
+}
+
+html,
+body {
+  height: 100%;
+}
+
+body {
+  background: var(--pooh-cream);
+  color: var(--pooh-brown);
+}
+
+/* Optional: subtle paper texture using gradients (no image needed) */
+.pooh-paper {
+  background:
+    radial-gradient(1000px 600px at 20% 10%, rgba(246, 196, 83, 0.18), transparent 60%),
+    radial-gradient(900px 500px at 80% 30%, rgba(184, 58, 45, 0.10), transparent 55%),
+    radial-gradient(900px 700px at 50% 90%, rgba(90, 62, 43, 0.10), transparent 55%),
+    linear-gradient(180deg, var(--pooh-cream), var(--pooh-paper));
+}
+
+/* Gentle “storybook” shadow */
+.pooh-shadow {
+  box-shadow: 0 12px 40px rgba(90, 62, 43, 0.18);
+}
+
+/* Smooth anchor scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+#our-story, #faq, #rsvp {
+  scroll-margin-top: 120px;
+}
+
+/* =========================
+   HERO (Desktop)
+   - background image = storybook
+   - inner div = your photo
+   ========================= */
+
+.hero-frame {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Desktop storybook background (full section) */
+.hero-frame::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: var(--hero-bg-url);
+  background-size: cover;
+  background-position: center;
+  filter: saturate(0.95) contrast(1.05);
+  opacity: 1;
+  z-index: 0;
+}
+
+/* Slight cinematic overlay so your window pops */
+.hero-frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.70) 100%),
+    linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.45));
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* The rounded “window” */
+.hero-window {
+  position: relative;
+  z-index: 2;
+  width: min(980px, calc(100vw - 2.5rem));
+  aspect-ratio: 16 / 10;
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+/* Inner div that holds YOUR photo */
+.hero-media {
+  position: absolute;
+  inset: 0;
+  background-image: var(--hero-photo-url);
+  background-size: cover;
+
+  /* Default: centered. You can override via vars in TSX */
+  background-position: var(--hero-photo-pos, 65% 65%);  
+
+  /* Optional: small zoom for nicer crop */
+  transform: scale(var(--hero-photo-scale, 1.02));
+}
+
+/* Optional “glass ring” highlight */
+.hero-glass-ring {
+  position: absolute;
+  inset: -2px;
+  border-radius: 30px;
+  pointer-events: none;
+  background:
+    radial-gradient(1200px 500px at 20% 10%, rgba(255,255,255,0.20), transparent 60%),
+    radial-gradient(900px 450px at 80% 30%, rgba(255,255,255,0.10), transparent 55%),
+    radial-gradient(700px 400px at 50% 100%, rgba(246,196,83,0.14), transparent 60%);
+  mix-blend-mode: screen;
+  z-index: 2;
+}
+
+/* Slight tint over photo */
+.hero-tint {
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.12);
+  z-index: 1;
+}
+
+/* Text wrapper sits above everything */
+.hero-copy {
+  position: absolute;
+  inset: 0; 
+  z-index: 3;
+  display: flex;
+  align-items: flex-end; /* bottom */
+  padding: 24px;
+}
+
+/* =========================
+   Scroll fade-in animation
+   ========================= */
+.fade-section {
+  opacity: 0;
+  transform: translateY(24px);
+  transition: opacity 0.9s ease, transform 0.9s ease;
+  will-change: opacity, transform;
+}
+
+.fade-section.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Stagger for card grids */
+.fade-stagger > * {
+  opacity: 0;
+  transform: translateY(18px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+
+.hero-panel{
+  padding: 18px;
+}
+
+.fade-stagger.is-visible > * {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.fade-stagger.is-visible > *:nth-child(1) { transition-delay: 0.08s; }
+.fade-stagger.is-visible > *:nth-child(2) { transition-delay: 0.16s; }
+.fade-stagger.is-visible > *:nth-child(3) { transition-delay: 0.24s; }
+.fade-stagger.is-visible > *:nth-child(4) { transition-delay: 0.32s; }
+
+/* =========================
+   NAV solid bar (desktop)
+   ========================= */
+.nav-solid {
+  background: rgba(255, 248, 231, 0.96); /* solid-ish Pooh cream */
+  border-color: rgba(246, 196, 83, 0.45);
+}
+
+/* =========================
+   MOBILE HERO
+   - NO storybook background
+   - ONLY your photo
+   - wording inside grey border panel
+   ========================= */
+@media (max-width: 767px) {
+  /* Remove storybook background + overlay */
+  .hero-frame::before,
+  .hero-frame::after {
+    display: none !important;
+  }
+
+  .hero-glass-ring {
+    background: none !important;
+  }
+
+
+  .hero-window {
+    width: 100% !important;
+    height: 100svh !important;
+    aspect-ratio: auto !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: none !important;
+  }
+
+  /* Photo is the whole mobile background */
+  .hero-media {
+    transform: none !important;
+    /* background-position: 50% 40% !important; tweak if needed on mobile */
+    background-image: none !important;
+  }
+
+  .hero-tint {
+    background: none !important;
+  }
+
+  .hero-panel h1 {
+    font-size: 2.25rem;
+    line-height: 1.05;
+  }
+
+  .hero-panel p {
+    font-size: 0.95rem;
+  }
+
+  .hero-frame {
+    min-height: 100svh !important;
+    padding-top: 0 !important;
+
+
+    background-image: var(--hero-photo-url) !important;
+    background-size: cover !important;
+    background-repeat: no-repeat !important;
+
+
+    /* ✅ centralise the image */
+    background-position: 20% 50% !important;
+  }
+
+
+    /* Layout: plug words to the top */
+  .hero-copy {
+    display: flex;
+    height: 100%;
+    align-items: flex-start; /* ✅ top instead of center */
+    justify-content: center;
+    padding: 18px 14px 0; /* ✅ push panel near top */
+    text-align: center;
+    margin-top: 15svh; /* ✅ add top margin to avoid notch */
+  }
+
+
+    /* The grey panel behind your words */
+  .hero-copy > .hero-panel {
+    width: min(92vw, 560px);
+    border-radius: 26px;
+    padding: 22px 22px 22px 22px;
+    background: rgba(80, 80, 80, 0.70);
+    /* ✅ remove the white/grey outer border */
+    border: none !important;
+    /* backdrop-filter: blur(6px); */
+    /* -webkit-backdrop-filter: blur(6px);
+    /* box-shadow: 0 20px 60px rgba(0,0,0,0.35); */
+    text-align: center;
+  }
+}
