@@ -144,7 +144,7 @@ export default function HomePage() {
                 The Wedding of
               </p> */}
 
-              <h1 className="mt-3 font-serif text-3xl leading-tight text-white">
+              <h1 className="mt-3 font-serif text-3xl leading-tight text-white sm:text-4xl md:text-6xl">
                 Bryant <span className="text-[#F6C453]">&</span> Cindy
               </h1>
 
