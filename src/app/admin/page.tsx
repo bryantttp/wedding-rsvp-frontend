@@ -3,7 +3,6 @@
 import { useEffect, useMemo, useState } from "react";
 
 type FirestoreTimestamp = {
-  // Firestore admin / JSON can vary a bit depending on how it was serialized
   seconds?: number;
   nanos?: number;
   _seconds?: number;
@@ -34,16 +33,26 @@ function formatDate(ts?: FirestoreTimestamp): string {
 
 export default function AdminPage() {
   const API_BASE = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const ADMIN_PASS = process.env.NEXT_PUBLIC_ADMIN_PASSWORD ?? "";
 
   const [data, setData] = useState<Rsvp[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // ✅ password gate state
+  const [unlocked, setUnlocked] = useState(false);
+  const [password, setPassword] = useState("");
+
   async function load() {
+    // ✅ don't load until unlocked
+    if (!unlocked) return;
+
     setLoading(true);
     setError("");
 
     try {
+      if (!API_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL");
+
       const res = await fetch(`${API_BASE}/admin/rsvps`, {
         method: "GET",
       });
@@ -55,7 +64,6 @@ export default function AdminPage() {
 
       const json = (await res.json()) as unknown;
 
-      // minimal runtime safety
       if (!Array.isArray(json)) {
         throw new Error("Unexpected response format (expected an array).");
       }
@@ -69,10 +77,16 @@ export default function AdminPage() {
     }
   }
 
+  // ✅ do NOT auto-load on mount anymore
+  // useEffect(() => {
+  //   load();
+  // }, []);
+
+  // ✅ load only after unlocking
   useEffect(() => {
-    load();
+    if (unlocked) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [unlocked]);
 
   const grouped = useMemo(() => {
     const map = new Map<number, Rsvp[]>();
@@ -84,7 +98,6 @@ export default function AdminPage() {
       map.get(group)!.push(r);
     }
 
-    // sort each group by createdAt (if present)
     for (const [, list] of map.entries()) {
       list.sort((a, b) => {
         const am = toMillis(a.createdAt) ?? 0;
@@ -98,6 +111,71 @@ export default function AdminPage() {
 
   const totalCount = data.length;
 
+  function onUnlock(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+
+    if (!ADMIN_PASS) {
+      setError("Missing NEXT_PUBLIC_ADMIN_PASSWORD");
+      return;
+    }
+
+    if (password === ADMIN_PASS) {
+      setUnlocked(true);
+      setPassword("");
+    } else {
+      setError("Wrong password.");
+    }
+  }
+
+  // ✅ LOCK SCREEN (no data fetch happens here)
+  if (!unlocked) {
+    return (
+      <main
+        style={{
+          maxWidth: 420,
+          margin: "48px auto",
+          padding: 16,
+          fontFamily: "Arial, sans-serif",
+        }}
+      >
+        <h1 style={{ fontSize: 28, margin: 0 }}>Admin</h1>
+        <p style={{ marginTop: 8, opacity: 0.75 }}>Enter password to view RSVPs.</p>
+
+        <form onSubmit={onUnlock} style={{ marginTop: 16 }}>
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            placeholder="Password"
+            style={{
+              width: "100%",
+              padding: "12px 12px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              outline: "none",
+            }}
+          />
+
+          <button
+            type="submit"
+            style={{
+              marginTop: 12,
+              width: "100%",
+              padding: "12px 14px",
+              cursor: "pointer",
+            }}
+          >
+            Unlock
+          </button>
+
+          {error && <p style={{ color: "crimson", marginTop: 12 }}>Error: {error}</p>}
+        </form>
+      </main>
+    );
+  }
+
+  // ✅ UNLOCKED VIEW (your original UI)
   return (
     <main style={{ maxWidth: 980, margin: "48px auto", padding: 16, fontFamily: "Arial, sans-serif" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
