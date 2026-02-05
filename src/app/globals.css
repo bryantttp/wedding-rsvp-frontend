@@ -98,7 +98,7 @@ html {
   background-size: cover;
 
   /* Default: centered. You can override via vars in TSX */
-  background-position: var(--hero-photo-pos, 65% 65%);  
+  background-position: var(--hero-photo-pos, 35% 35%);  
 
   /* Optional: small zoom for nicer crop */
   transform: scale(var(--hero-photo-scale, 1.02));
@@ -239,7 +239,7 @@ html {
 
 
     /* ✅ centralise the image */
-    background-position: 20% 50% !important;
+    background-position: 50% 50% !important;
   }
 
 
