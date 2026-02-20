@@ -189,7 +189,7 @@ export default function HomePage() {
 
               {/* ✅ Attendees */}
               <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-4 pooh-shadow">
-                <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">Attendees</div>
+                <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">Family Members</div>
 
                 {/* Attendee inputs (none shown until user clicks add) */}
                 <div className="grid gap-3">
