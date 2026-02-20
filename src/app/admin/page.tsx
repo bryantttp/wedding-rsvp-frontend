@@ -13,7 +13,8 @@ type Rsvp = {
   id: string;
   name: string;
   email: string;
-  groupNumber: number;
+  // ✅ updated: list of attendees (optional)
+  listOfAttendees?: string[];
   createdAt?: FirestoreTimestamp;
 };
 
@@ -29,6 +30,19 @@ function formatDate(ts?: FirestoreTimestamp): string {
   const ms = toMillis(ts);
   if (ms == null) return "";
   return new Date(ms).toLocaleString();
+}
+
+type FlatRow = {
+  groupIndex: number; // 1..N (each RSVP doc is one group)
+  email: string;
+  createdAt?: FirestoreTimestamp;
+  attendeeIndex: number; // 1..k (0 means no attendees)
+  attendeeName: string;
+};
+
+function csvEscape(value: unknown): string {
+  const s = String(value ?? "");
+  return `"${s.replace(/"/g, '""')}"`;
 }
 
 export default function AdminPage() {
@@ -53,9 +67,7 @@ export default function AdminPage() {
     try {
       if (!API_BASE) throw new Error("Missing NEXT_PUBLIC_API_BASE_URL");
 
-      const res = await fetch(`${API_BASE}/admin/rsvps`, {
-        method: "GET",
-      });
+      const res = await fetch(`${API_BASE}/admin/rsvps`, { method: "GET" });
 
       if (!res.ok) {
         const text = await res.text();
@@ -77,39 +89,65 @@ export default function AdminPage() {
     }
   }
 
-  // ✅ do NOT auto-load on mount anymore
-  // useEffect(() => {
-  //   load();
-  // }, []);
-
   // ✅ load only after unlocking
   useEffect(() => {
     if (unlocked) load();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked]);
 
+  // ✅ each RSVP doc is ONE group; we display attendee rows under it
   const grouped = useMemo(() => {
-    const map = new Map<number, Rsvp[]>();
+    const sorted = [...data].sort((a, b) => {
+      const am = toMillis(a.createdAt) ?? 0;
+      const bm = toMillis(b.createdAt) ?? 0;
+      return am - bm;
+    });
 
-    for (const r of data) {
-      const group = Number(r.groupNumber);
-      if (!Number.isFinite(group)) continue;
-      if (!map.has(group)) map.set(group, []);
-      map.get(group)!.push(r);
-    }
+    return sorted.map((rsvp, idx) => ({
+      groupIndex: idx + 1,
+      rsvp,
+      attendees: (rsvp.listOfAttendees ?? []).map((s) => s.trim()).filter(Boolean),
+    }));
+  }, [data]);
 
-    for (const [, list] of map.entries()) {
-      list.sort((a, b) => {
-        const am = toMillis(a.createdAt) ?? 0;
-        const bm = toMillis(b.createdAt) ?? 0;
-        return am - bm;
+  const flatRows = useMemo<FlatRow[]>(() => {
+    const rows: FlatRow[] = [];
+
+    for (const g of grouped) {
+      const attendees = g.attendees;
+
+      if (attendees.length === 0) {
+        // still show a row so the RSVP isn't "invisible"
+        rows.push({
+          groupIndex: g.groupIndex,
+          email: g.rsvp.email,
+          createdAt: g.rsvp.createdAt,
+          attendeeIndex: 0,
+          attendeeName: "(No attendees added)",
+        });
+        continue;
+      }
+
+      attendees.forEach((name, i) => {
+        rows.push({
+          groupIndex: g.groupIndex,
+          email: g.rsvp.email,
+          createdAt: g.rsvp.createdAt,
+          attendeeIndex: i + 1,
+          attendeeName: name,
+        });
       });
     }
 
-    return Array.from(map.entries()).sort((a, b) => a[0] - b[0]);
-  }, [data]);
+    return rows;
+  }, [grouped]);
 
-  const totalCount = data.length;
+  const totalSubmissions = data.length;
+  const totalAttendees = useMemo(() => {
+    let n = 0;
+    for (const r of data) n += (r.listOfAttendees ?? []).filter((x) => x?.trim()).length;
+    return n;
+  }, [data]);
 
   function onUnlock(e: React.FormEvent) {
     e.preventDefault();
@@ -126,6 +164,36 @@ export default function AdminPage() {
     } else {
       setError("Wrong password.");
     }
+  }
+
+  function exportChecklistCSV() {
+    if (!flatRows.length) return;
+
+    const header = ["Group", "Email", "Created", "Attendee #", "Attendee"].map(csvEscape).join(",");
+    const lines = flatRows.map((r) =>
+      [
+        r.groupIndex,
+        r.email,
+        formatDate(r.createdAt) || "",
+        r.attendeeIndex === 0 ? "" : r.attendeeIndex,
+        r.attendeeName === "(No attendees added)" ? "" : r.attendeeName,
+      ]
+        .map(csvEscape)
+        .join(",")
+    );
+
+    const csv = [header, ...lines].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = "wedding_rsvp_attendees.csv";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+
+    URL.revokeObjectURL(url);
   }
 
   // ✅ LOCK SCREEN (no data fetch happens here)
@@ -175,66 +243,79 @@ export default function AdminPage() {
     );
   }
 
-  // ✅ UNLOCKED VIEW (your original UI)
+  const th = { textAlign: "left" as const, padding: 10, borderBottom: "1px solid #ddd" };
+  const td = { padding: 10, borderBottom: "1px solid #eee", verticalAlign: "top" as const };
+
+  // ✅ UNLOCKED VIEW
   return (
     <main style={{ maxWidth: 980, margin: "48px auto", padding: 16, fontFamily: "Arial, sans-serif" }}>
       <header style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: 12 }}>
         <div>
           <h1 style={{ fontSize: 28, margin: 0 }}>Admin — RSVPs</h1>
           <p style={{ marginTop: 6, opacity: 0.75 }}>
-            Total submissions: <strong>{totalCount}</strong>
+            Total submissions: <strong>{totalSubmissions}</strong> · Total attendees:{" "}
+            <strong>{totalAttendees}</strong>
           </p>
         </div>
 
-        <button
-          onClick={load}
-          disabled={loading}
-          style={{
-            padding: "10px 14px",
-            cursor: loading ? "not-allowed" : "pointer",
-          }}
-        >
-          {loading ? "Refreshing..." : "Refresh"}
-        </button>
+        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
+          <button
+            onClick={load}
+            disabled={loading}
+            style={{ padding: "10px 14px", cursor: loading ? "not-allowed" : "pointer" }}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+
+          <button
+            onClick={exportChecklistCSV}
+            disabled={flatRows.length === 0}
+            style={{
+              padding: "10px 14px",
+              cursor: flatRows.length === 0 ? "not-allowed" : "pointer",
+              opacity: flatRows.length === 0 ? 0.6 : 1,
+            }}
+          >
+            Export CSV
+          </button>
+        </div>
       </header>
 
       {loading && <p>Loading…</p>}
       {error && <p style={{ color: "crimson" }}>Error: {error}</p>}
 
-      {!loading && !error && grouped.length === 0 && <p>No RSVPs yet.</p>}
+      {!loading && !error && data.length === 0 && <p>No RSVPs yet.</p>}
 
-      {!loading &&
-        !error &&
-        grouped.map(([groupNumber, list]) => (
-          <section key={groupNumber} style={{ marginTop: 22 }}>
-            <h2 style={{ fontSize: 20, marginBottom: 8 }}>
-              Group {groupNumber} <span style={{ opacity: 0.7 }}>({list.length})</span>
-            </h2>
+      {!loading && !error && data.length > 0 && (
+        <section style={{ marginTop: 18 }}>
+          <h2 style={{ fontSize: 18, marginBottom: 10 }}>Attendee checklist view</h2>
 
-            <div style={{ overflowX: "auto", border: "1px solid #ddd", borderRadius: 10 }}>
-              <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                <thead>
-                  <tr style={{ background: "#f6f6f6" }}>
-                    <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Name</th>
-                    <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Email</th>
-                    <th style={{ textAlign: "left", padding: 10, borderBottom: "1px solid #ddd" }}>Created</th>
+          <div style={{ overflowX: "auto", border: "1px solid #ddd", borderRadius: 10 }}>
+            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+              <thead>
+                <tr style={{ background: "#f6f6f6" }}>
+                  <th style={th}>Group</th>
+                  <th style={th}>Email</th>
+                  <th style={th}>Created</th>
+                  <th style={th}>#</th>
+                  <th style={th}>Attendee</th>
+                </tr>
+              </thead>
+              <tbody>
+                {flatRows.map((row, idx) => (
+                  <tr key={`${row.email}-${idx}`}>
+                    <td style={td}>{row.groupIndex}</td>
+                    <td style={td}>{row.email}</td>
+                    <td style={td}>{formatDate(row.createdAt) || "-"}</td>
+                    <td style={td}>{row.attendeeIndex === 0 ? "-" : row.attendeeIndex}</td>
+                    <td style={td}>{row.attendeeName}</td>
                   </tr>
-                </thead>
-                <tbody>
-                  {list.map((r) => (
-                    <tr key={r.id}>
-                      <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{r.name}</td>
-                      <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>{r.email}</td>
-                      <td style={{ padding: 10, borderBottom: "1px solid #eee" }}>
-                        {formatDate(r.createdAt) || "-"}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </section>
-        ))}
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
     </main>
   );
 }
