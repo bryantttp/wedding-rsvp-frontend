@@ -39,7 +39,7 @@ html {
   scroll-behavior: smooth;
 }
 
-#our-story, #faq, #venue, #rsvp {
+#venue, #rsvp {
   scroll-margin-top: 120px;
 }
 
@@ -187,7 +187,7 @@ html {
    - wording inside grey border panel
    ========================= */
 @media (max-width: 767px) {
-  /* Remove storybook background + overlay */
+  /* Remove desktop background + overlays */
   .hero-frame::before,
   .hero-frame::after {
     display: none !important;
@@ -197,26 +197,51 @@ html {
     background: none !important;
   }
 
-
   .hero-window {
     width: 100% !important;
-    height: 100svh !important;
+    height: 80svh !important;
     aspect-ratio: auto !important;
-    border-radius: 0 !important;
+    border-radius: 18px !important;         /* ✅ rounded inside frame */
+    overflow: hidden !important;
     box-shadow: none !important;
     border: none !important;
     background: none !important;
+    margin-top: 20svh;
   }
 
-  /* Photo is the whole mobile background */
+  /* Photo becomes full mobile background */
   .hero-media {
     transform: none !important;
-    /* background-position: 50% 40% !important; tweak if needed on mobile */
-    background-image: none !important;
+    background-position: 55% 50% !important;
   }
 
   .hero-tint {
     background: none !important;
+  }
+
+  .hero-frame {
+    min-height: 100svh !important;
+    padding: 16px !important;   /* frame thickness */
+
+    /* Use your desktop storybook background instead of yellow */
+    background-image: var(--hero-bg-url) !important;
+    background-size: cover !important;
+    background-position: center !important;
+    background-repeat: no-repeat !important;
+    box-sizing: border-box;
+  }
+
+  /* =========================
+     TEXT POSITIONING (FIXED)
+     ========================= */
+  .hero-copy {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    justify-content: center;     /* center horizontally */
+    align-items: flex-start;     /* push upward */
+    padding: 0 16px;
+    padding-top: 5svh;          /* 👈 controls vertical height (safe for iPhone notch) */
   }
 
   .hero-panel h1 {
@@ -228,44 +253,13 @@ html {
     font-size: 0.95rem;
   }
 
-  .hero-frame {
-    min-height: 100svh !important;
-    padding-top: 0 !important;
-
-
-    background-image: var(--hero-photo-url) !important;
-    background-size: cover !important;
-    background-repeat: no-repeat !important;
-
-
-    /* ✅ centralise the image */
-    background-position: 50% 50% !important;
-  }
-
-
-    /* Layout: plug words to the top */
-  .hero-copy {
-    display: flex;
-    height: 100%;
-    align-items: flex-start; /* ✅ top instead of center */
-    justify-content: center;
-    padding: 18px 14px 0; /* ✅ push panel near top */
-    text-align: center;
-    margin-top: 15svh; /* ✅ add top margin to avoid notch */
-  }
-
-
-    /* The grey panel behind your words */
+  /* Glass panel */
   .hero-copy > .hero-panel {
     width: min(92vw, 560px);
     border-radius: 26px;
-    padding: 22px 22px 22px 22px;
-    background: rgba(80, 80, 80, 0.70);
-    /* ✅ remove the white/grey outer border */
+    padding: 20px 22px;
+    background: rgba(255, 248, 231, 0.75);
     border: none !important;
-    /* backdrop-filter: blur(6px); */
-    /* -webkit-backdrop-filter: blur(6px);
-    /* box-shadow: 0 20px 60px rgba(0,0,0,0.35); */
     text-align: center;
   }
 }

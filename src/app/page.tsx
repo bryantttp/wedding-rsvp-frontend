@@ -142,7 +142,7 @@ export default function HomePage() {
 
           <div className="hero-copy">
             <div className="hero-panel">
-              <h1 className="mt-3 font-serif text-3xl leading-tight text-white sm:text-4xl md:text-6xl">
+              <h1 className="font-serif text-3xl leading-tight text-[#5A3E2B] md:text-white sm:text-4xl md:text-6xl">
                 Bryant <span className="text-[#F6C453]">&</span> Cindy
               </h1>
             </div>
@@ -210,7 +210,7 @@ export default function HomePage() {
         <section id="rsvp" className="fade-section pb-24 pt-10 md:pb-32">
           <div className="fade-stagger rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7] p-6 text-[#5A3E2B] pooh-shadow md:p-10">
             <h2 className="font-serif text-3xl md:text-4xl">Kindly Let Us Know</h2>
-            <p className="mt-3 max-w-2xl text-[#5A3E2B]/80">Please RSVP below (name, email, and attendees).</p>
+            <p className="mt-3 max-w-2xl text-[#5A3E2B]/80">Please RSVP below (name, email, and additional family members).</p>
 
             <form onSubmit={onSubmit} className="mt-8 grid gap-4">
               <div className="grid gap-4 md:grid-cols-2">
