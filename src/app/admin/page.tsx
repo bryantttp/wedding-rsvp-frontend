@@ -33,7 +33,7 @@ function formatDate(ts?: FirestoreTimestamp): string {
 
 type FlatRow = {
   groupIndex: number;
-  rsvpId: string; // Firestore document id
+  rsvpId: string;
   email: string;
   createdAt?: FirestoreTimestamp;
   attendeeIndex: number;
@@ -54,11 +54,10 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  // password gate
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
 
-  // ✅ selection state (RSVP doc IDs)
+  // ✅ selection state: RSVP doc IDs
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   async function load() {
@@ -81,7 +80,7 @@ export default function AdminPage() {
       if (!Array.isArray(json)) throw new Error("Unexpected response format (expected an array).");
 
       setData(json as Rsvp[]);
-      setSelectedIds(new Set()); // clear selection on reload
+      setSelectedIds(new Set()); // clear selection after refresh
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load RSVPs");
     } finally {
@@ -94,7 +93,6 @@ export default function AdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked]);
 
-  // sort RSVPs by createdAt, treat each doc as a "group"
   const grouped = useMemo(() => {
     const sorted = [...data].sort((a, b) => {
       const am = toMillis(a.createdAt) ?? 0;
@@ -220,7 +218,7 @@ export default function AdminPage() {
     }
   }
 
-  // ✅ BULK DELETE (multiple DELETE calls)
+  // ✅ BULK DELETE: send DELETE with JSON body { ids: [...] }
   async function deleteSelected() {
     if (!unlocked) return;
     if (!API_BASE) {
@@ -240,35 +238,19 @@ export default function AdminPage() {
     setError("");
 
     try {
-      const results = await Promise.allSettled(
-        ids.map((id) =>
-          fetch(`${API_BASE}/admin/rsvps/${encodeURIComponent(id)}`, { method: "DELETE" })
-        )
-      );
-
-      const failed: string[] = [];
-      const succeeded: string[] = [];
-
-      results.forEach((r, idx) => {
-        const id = ids[idx];
-        if (r.status === "rejected") {
-          failed.push(id);
-          return;
-        }
-        if (!r.value.ok) failed.push(id);
-        else succeeded.push(id);
+      const res = await fetch(`${API_BASE}/admin/rsvps`, {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids }),
       });
 
-      // ✅ remove SUCCESSFUL deletions from UI
-      const succeededSet = new Set(succeeded);
-      setData((prev) => prev.filter((r) => !succeededSet.has(r.id)));
+      const text = await res.text();
+      if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
 
-      // ✅ keep failed selected so you can retry
-      setSelectedIds(new Set(failed));
-
-      if (failed.length > 0) {
-        setError(`Deleted ${succeeded.length}, but ${failed.length} failed. Try again or refresh.`);
-      }
+      // ✅ remove deleted docs from UI
+      const deletedSet = new Set(ids);
+      setData((prev) => prev.filter((r) => !deletedSet.has(r.id)));
+      setSelectedIds(new Set());
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Bulk delete failed");
     } finally {
