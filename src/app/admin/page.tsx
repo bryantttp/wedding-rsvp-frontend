@@ -34,6 +34,7 @@ function formatDate(ts?: FirestoreTimestamp): string {
 type FlatRow = {
   groupIndex: number;
   rsvpId: string;
+  groupName: string;
   email: string;
   createdAt?: FirestoreTimestamp;
   attendeeIndex: number;
@@ -57,7 +58,7 @@ export default function AdminPage() {
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
 
-  // ✅ selection state: RSVP doc IDs
+  // ✅ selection state (RSVP doc IDs)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   async function load() {
@@ -80,7 +81,7 @@ export default function AdminPage() {
       if (!Array.isArray(json)) throw new Error("Unexpected response format (expected an array).");
 
       setData(json as Rsvp[]);
-      setSelectedIds(new Set()); // clear selection after refresh
+      setSelectedIds(new Set()); // clear selection on reload
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load RSVPs");
     } finally {
@@ -117,7 +118,8 @@ export default function AdminPage() {
         rows.push({
           groupIndex: g.groupIndex,
           rsvpId: g.rsvp.id,
-          email: g.rsvp.email,
+          groupName: g.rsvp.name ?? "",
+          email: g.rsvp.email ?? "",
           createdAt: g.rsvp.createdAt,
           attendeeIndex: 0,
           attendeeName: "(No attendees added)",
@@ -129,7 +131,8 @@ export default function AdminPage() {
         rows.push({
           groupIndex: g.groupIndex,
           rsvpId: g.rsvp.id,
-          email: g.rsvp.email,
+          groupName: g.rsvp.name ?? "",
+          email: g.rsvp.email ?? "",
           createdAt: g.rsvp.createdAt,
           attendeeIndex: i + 1,
           attendeeName: name,
@@ -139,6 +142,13 @@ export default function AdminPage() {
 
     return rows;
   }, [grouped]);
+
+  // ✅ rowSpan counts per RSVP id (so we can merge cells)
+  const rowSpanByRsvpId = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const r of flatRows) map.set(r.rsvpId, (map.get(r.rsvpId) ?? 0) + 1);
+    return map;
+  }, [flatRows]);
 
   const totalSubmissions = data.length;
   const totalAttendees = useMemo(() => {
@@ -218,7 +228,6 @@ export default function AdminPage() {
     }
   }
 
-  // ✅ BULK DELETE: send DELETE with JSON body { ids: [...] }
   async function deleteSelected() {
     if (!unlocked) return;
     if (!API_BASE) {
@@ -227,30 +236,36 @@ export default function AdminPage() {
     }
     if (selectedIds.size === 0) return;
 
-    const ids = Array.from(selectedIds);
-
-    const ok = window.confirm(
-      `Hard delete ${ids.length} RSVP(s)?\n\nThis cannot be undone.`
-    );
+    const ok = window.confirm(`Hard delete ${selectedIds.size} RSVP(s)?\n\nThis cannot be undone.`);
     if (!ok) return;
 
     setLoading(true);
     setError("");
 
+    const ids = Array.from(selectedIds);
+
     try {
-      const res = await fetch(`${API_BASE}/admin/rsvps`, {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ids }),
+      const results = await Promise.allSettled(
+        ids.map((id) =>
+          fetch(`${API_BASE}/admin/rsvps/${encodeURIComponent(id)}`, { method: "DELETE" })
+        )
+      );
+
+      const failed: string[] = [];
+      results.forEach((r, idx) => {
+        if (r.status === "rejected") failed.push(ids[idx]);
+        else if (!r.value.ok) failed.push(ids[idx]);
       });
 
-      const text = await res.text();
-      if (!res.ok) throw new Error(text || `HTTP ${res.status}`);
+      const failedSet = new Set(failed);
 
-      // ✅ remove deleted docs from UI
-      const deletedSet = new Set(ids);
-      setData((prev) => prev.filter((r) => !deletedSet.has(r.id)));
-      setSelectedIds(new Set());
+      // keep failed in UI, remove successes
+      setData((prev) => prev.filter((r) => failedSet.has(r.id)));
+      setSelectedIds(new Set(failed));
+
+      if (failed.length > 0) {
+        setError(`Deleted some RSVPs, but ${failed.length} failed. Try again or refresh.`);
+      }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Bulk delete failed");
     } finally {
@@ -259,23 +274,32 @@ export default function AdminPage() {
   }
 
   function exportCsv() {
-    // ✅ One row per RSVP document (group), not per attendee
-    const header = ["Group Name", "Email", "Created", "Attendees"].join(",");
+    const header = ["Group", "Group Name", "Email", "Created", "Attendee"].join(",");
 
-    const lines = grouped.map((g) => {
+    const lines: string[] = [];
+
+    for (const g of grouped) {
       const created = formatDate(g.rsvp.createdAt) || "";
-      const attendeesText =
-        g.attendees.length > 0 ? g.attendees.join(" | ") : ""; // or "(No attendees added)"
 
-      const cells = [
-        g.rsvp.name ?? "",
-        g.rsvp.email ?? "",
-        created,
-        attendeesText,
-      ].map(csvEscape);
+      // 1) Group header row
+      lines.push(
+        [
+          String(g.groupIndex),
+          g.rsvp.name ?? "",
+          g.rsvp.email ?? "",
+          created,
+          "",
+        ].map(csvEscape).join(",")
+      );
 
-      return cells.join(",");
-    });
+      // 2) Attendee rows (only if present)
+      for (const a of g.attendees) {
+        lines.push(["", "", "", "", a].map(csvEscape).join(","));
+      }
+
+      // Blank line between groups
+      lines.push("");
+    }
 
     const csv = [header, ...lines].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -283,14 +307,14 @@ export default function AdminPage() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `rsvps-groups-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `rsvps-grouped-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
     URL.revokeObjectURL(url);
   }
 
-  // LOCK SCREEN
+  // LOCK
   if (!unlocked) {
     return (
       <main style={{ maxWidth: 420, margin: "48px auto", padding: 16, fontFamily: "Arial, sans-serif" }}>
@@ -303,13 +327,7 @@ export default function AdminPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            style={{
-              width: "100%",
-              padding: "12px 12px",
-              borderRadius: 10,
-              border: "1px solid #ddd",
-              outline: "none",
-            }}
+            style={{ width: "100%", padding: "12px 12px", borderRadius: 10, border: "1px solid #ddd", outline: "none" }}
           />
 
           <button type="submit" style={{ marginTop: 12, width: "100%", padding: "12px 14px", cursor: "pointer" }}>
@@ -325,31 +343,22 @@ export default function AdminPage() {
   const th = { textAlign: "left" as const, padding: 10, borderBottom: "1px solid #ddd" };
   const td = { padding: 10, borderBottom: "1px solid #eee", verticalAlign: "top" as const };
 
-  // UNLOCKED VIEW
+  // UNLOCKED
   return (
-    <main style={{ maxWidth: 1120, margin: "48px auto", padding: 16, fontFamily: "Arial, sans-serif" }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
+    <main style={{ maxWidth: 1200, margin: "48px auto", padding: 16, fontFamily: "Arial, sans-serif" }}>
+      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
         <div>
           <h1 style={{ fontSize: 28, margin: 0 }}>Admin — RSVPs</h1>
           <p style={{ marginTop: 6, opacity: 0.75 }}>
-            Total submissions: <strong>{totalSubmissions}</strong> · Total attendees:{" "}
-            <strong>{totalAttendees}</strong>
+            Total submissions: <strong>{totalSubmissions}</strong> · Total attendees: <strong>{totalAttendees}</strong>
           </p>
         </div>
 
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <button
             onClick={exportCsv}
-            disabled={loading || flatRows.length === 0}
-            style={{ padding: "10px 14px", cursor: loading || flatRows.length === 0 ? "not-allowed" : "pointer" }}
+            disabled={loading || grouped.length === 0}
+            style={{ padding: "10px 14px", cursor: loading || grouped.length === 0 ? "not-allowed" : "pointer" }}
           >
             Export CSV
           </button>
@@ -381,7 +390,6 @@ export default function AdminPage() {
 
       {loading && <p>Loading…</p>}
       {error && <p style={{ color: "crimson" }}>Error: {error}</p>}
-
       {!loading && !error && data.length === 0 && <p>No RSVPs yet.</p>}
 
       {!loading && !error && data.length > 0 && (
@@ -396,12 +404,12 @@ export default function AdminPage() {
                     <input
                       type="checkbox"
                       checked={allSelected}
-                      disabled={loading}
                       onChange={toggleSelectAll}
                       aria-label="Select all RSVP groups"
                     />
                   </th>
                   <th style={th}>Group</th>
+                  <th style={th}>Main name</th>
                   <th style={th}>Email</th>
                   <th style={th}>Created</th>
                   <th style={th}>#</th>
@@ -412,36 +420,38 @@ export default function AdminPage() {
 
               <tbody>
                 {(() => {
-                  let lastGroup = -1;
+                  const seen = new Set<string>();
 
                   return flatRows.map((row, idx) => {
-                    const isFirstRowOfGroup = row.groupIndex !== lastGroup;
-                    if (isFirstRowOfGroup) lastGroup = row.groupIndex;
+                    const first = !seen.has(row.rsvpId);
+                    if (first) seen.add(row.rsvpId);
 
+                    const span = rowSpanByRsvpId.get(row.rsvpId) ?? 1;
                     const checked = selectedIds.has(row.rsvpId);
 
                     return (
                       <tr key={`${row.rsvpId}-${idx}`}>
-                        <td style={td}>
-                          {isFirstRowOfGroup ? (
+                        {first ? (
+                          <td style={td} rowSpan={span}>
                             <input
                               type="checkbox"
                               checked={checked}
-                              disabled={loading}
                               onChange={() => toggleSelect(row.rsvpId)}
                               aria-label={`Select group ${row.groupIndex}`}
                             />
-                          ) : null}
-                        </td>
+                          </td>
+                        ) : null}
 
-                        <td style={td}>{row.groupIndex}</td>
-                        <td style={td}>{row.email}</td>
-                        <td style={td}>{formatDate(row.createdAt) || "-"}</td>
+                        {first ? <td style={td} rowSpan={span}>{row.groupIndex}</td> : null}
+                        {first ? <td style={td} rowSpan={span}>{row.groupName || "-"}</td> : null}
+                        {first ? <td style={td} rowSpan={span}>{row.email}</td> : null}
+                        {first ? <td style={td} rowSpan={span}>{formatDate(row.createdAt) || "-"}</td> : null}
+
                         <td style={td}>{row.attendeeIndex === 0 ? "-" : row.attendeeIndex}</td>
                         <td style={td}>{row.attendeeName}</td>
 
-                        <td style={td}>
-                          {isFirstRowOfGroup ? (
+                        {first ? (
+                          <td style={td} rowSpan={span}>
                             <button
                               type="button"
                               onClick={() => deleteRsvpById(row.rsvpId)}
@@ -457,8 +467,8 @@ export default function AdminPage() {
                             >
                               Delete
                             </button>
-                          ) : null}
-                        </td>
+                          </td>
+                        ) : null}
                       </tr>
                     );
                   });
@@ -468,7 +478,7 @@ export default function AdminPage() {
           </div>
 
           <p style={{ marginTop: 10, opacity: 0.7, fontSize: 12 }}>
-            “Select all” and checkboxes apply to RSVP groups (each Firestore document). Deleting is a hard delete.
+            Checkboxes apply to RSVP groups (each Firestore document). Deleting is a hard delete.
           </p>
         </section>
       )}
