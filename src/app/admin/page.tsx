@@ -281,20 +281,28 @@ export default function AdminPage() {
     for (const g of grouped) {
       const created = formatDate(g.rsvp.createdAt) || "";
 
-      // 1) Group header row
+      // 1) Group header row (attendee column = group name)
       lines.push(
         [
           String(g.groupIndex),
           g.rsvp.name ?? "",
           g.rsvp.email ?? "",
           created,
-          "",
+          g.rsvp.name ?? "", // ✅ attendee column = group name
         ].map(csvEscape).join(",")
       );
 
-      // 2) Attendee rows (only if present)
+      // 2) Attendee rows (ONLY attendee name)
       for (const a of g.attendees) {
-        lines.push(["", "", "", "", a].map(csvEscape).join(","));
+        lines.push(
+          [
+            "",
+            "",
+            "",
+            "",
+            a, // ✅ attendee only (no group name prefix)
+          ].map(csvEscape).join(",")
+        );
       }
 
       // Blank line between groups
