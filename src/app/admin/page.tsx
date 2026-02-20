@@ -33,7 +33,7 @@ function formatDate(ts?: FirestoreTimestamp): string {
 
 type FlatRow = {
   groupIndex: number;
-  rsvpId: string;
+  rsvpId: string; // Firestore document id
   email: string;
   createdAt?: FirestoreTimestamp;
   attendeeIndex: number;
@@ -81,7 +81,7 @@ export default function AdminPage() {
       if (!Array.isArray(json)) throw new Error("Unexpected response format (expected an array).");
 
       setData(json as Rsvp[]);
-      setSelectedIds(new Set()); // ✅ clear selection on reload
+      setSelectedIds(new Set()); // clear selection on reload
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load RSVPs");
     } finally {
@@ -94,6 +94,7 @@ export default function AdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked]);
 
+  // sort RSVPs by createdAt, treat each doc as a "group"
   const grouped = useMemo(() => {
     const sorted = [...data].sort((a, b) => {
       const am = toMillis(a.createdAt) ?? 0;
@@ -179,7 +180,7 @@ export default function AdminPage() {
   }
 
   function toggleSelectAll() {
-    setSelectedIds((prev) => {
+    setSelectedIds(() => {
       if (allSelected) return new Set();
       return new Set(allIds);
     });
@@ -219,7 +220,7 @@ export default function AdminPage() {
     }
   }
 
-  // ✅ BULK DELETE (client-side multiple DELETE calls)
+  // ✅ BULK DELETE (multiple DELETE calls)
   async function deleteSelected() {
     if (!unlocked) return;
     if (!API_BASE) {
@@ -228,18 +229,17 @@ export default function AdminPage() {
     }
     if (selectedIds.size === 0) return;
 
+    const ids = Array.from(selectedIds);
+
     const ok = window.confirm(
-      `Hard delete ${selectedIds.size} RSVP(s)?\n\nThis cannot be undone.`
+      `Hard delete ${ids.length} RSVP(s)?\n\nThis cannot be undone.`
     );
     if (!ok) return;
 
     setLoading(true);
     setError("");
 
-    const ids = Array.from(selectedIds);
-
     try {
-      // If you later add a bulk delete API, you can replace this loop with one POST/DELETE.
       const results = await Promise.allSettled(
         ids.map((id) =>
           fetch(`${API_BASE}/admin/rsvps/${encodeURIComponent(id)}`, { method: "DELETE" })
@@ -247,21 +247,27 @@ export default function AdminPage() {
       );
 
       const failed: string[] = [];
+      const succeeded: string[] = [];
+
       results.forEach((r, idx) => {
+        const id = ids[idx];
         if (r.status === "rejected") {
-          failed.push(ids[idx]);
+          failed.push(id);
           return;
         }
-        if (!r.value.ok) failed.push(ids[idx]);
+        if (!r.value.ok) failed.push(id);
+        else succeeded.push(id);
       });
 
-      // Remove successes from UI
-      const failedSet = new Set(failed);
-      setData((prev) => prev.filter((r) => failedSet.has(r.id)));
-      setSelectedIds(new Set(failed)); // keep failed ones selected so you can retry
+      // ✅ remove SUCCESSFUL deletions from UI
+      const succeededSet = new Set(succeeded);
+      setData((prev) => prev.filter((r) => !succeededSet.has(r.id)));
+
+      // ✅ keep failed selected so you can retry
+      setSelectedIds(new Set(failed));
 
       if (failed.length > 0) {
-        setError(`Deleted some RSVPs, but ${failed.length} failed. Try again or refresh.`);
+        setError(`Deleted ${succeeded.length}, but ${failed.length} failed. Try again or refresh.`);
       }
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Bulk delete failed");
@@ -277,14 +283,7 @@ export default function AdminPage() {
       const created = formatDate(r.createdAt) || "";
       const attNo = r.attendeeIndex === 0 ? "" : String(r.attendeeIndex);
 
-      const cells = [
-        String(r.groupIndex),
-        r.email,
-        created,
-        attNo,
-        r.attendeeName,
-      ].map(csvEscape);
-
+      const cells = [String(r.groupIndex), r.email, created, attNo, r.attendeeName].map(csvEscape);
       return cells.join(",");
     });
 
@@ -407,6 +406,7 @@ export default function AdminPage() {
                     <input
                       type="checkbox"
                       checked={allSelected}
+                      disabled={loading}
                       onChange={toggleSelectAll}
                       aria-label="Select all RSVP groups"
                     />
@@ -437,6 +437,7 @@ export default function AdminPage() {
                             <input
                               type="checkbox"
                               checked={checked}
+                              disabled={loading}
                               onChange={() => toggleSelect(row.rsvpId)}
                               aria-label={`Select group ${row.groupIndex}`}
                             />
