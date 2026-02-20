@@ -16,7 +16,7 @@ export default function HomePage() {
   const [email, setEmail] = useState("");
 
   // ✅ NEW: attendees list
-  const [attendees, setAttendees] = useState<string[]>([""]);
+  const [attendees, setAttendees] = useState<string[]>([]);
 
   const [status, setStatus] = useState<Status>({ type: "idle", message: "" });
   const year = useMemo(() => new Date().getFullYear(), []);
