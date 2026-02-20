@@ -15,10 +15,8 @@ export default function HomePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // ✅ attendees list (no rows by default)
+  // ✅ attendees list (EMPTY by default)
   const [attendees, setAttendees] = useState<string[]>([]);
-  // ✅ single input to add one attendee at a time
-  const [newAttendee, setNewAttendee] = useState("");
 
   const [status, setStatus] = useState<Status>({ type: "idle", message: "" });
   const year = useMemo(() => new Date().getFullYear(), []);
@@ -53,15 +51,12 @@ export default function HomePage() {
     setAttendees((prev) => prev.map((a, i) => (i === idx ? value : a)));
   }
 
-  // ✅ add 1 attendee at a time from newAttendee
-  function addAttendee() {
-    const trimmed = newAttendee.trim();
-    if (!trimmed) return;
-    setAttendees((prev) => [...prev, trimmed]);
-    setNewAttendee("");
+  // ✅ add a NEW blank row each time
+  function addAttendeeRow() {
+    setAttendees((prev) => [...prev, ""]);
   }
 
-  // ✅ allow removing ANY attendee, including the first
+  // ✅ remove ANY row (including the first)
   function removeAttendeeRow(idx: number) {
     setAttendees((prev) => prev.filter((_, i) => i !== idx));
   }
@@ -70,18 +65,17 @@ export default function HomePage() {
     e.preventDefault();
     setStatus({ type: "loading", message: "Sending your RSVP..." });
 
-    const cleanedAttendees = attendees.map((a) => a.trim()).filter(Boolean);
-
     if (!name.trim() || !email.trim()) {
       setStatus({ type: "error", message: "Please fill in name and email." });
       return;
     }
 
-    // ✅ attendees not compulsory now
+    const cleanedAttendees = attendees.map((a) => a.trim()).filter(Boolean);
+
     const payload = {
       name: name.trim(),
       email: email.trim(),
-      listOfAttendees: cleanedAttendees,
+      listOfAttendees: cleanedAttendees, // can be []
     };
 
     try {
@@ -102,8 +96,7 @@ export default function HomePage() {
 
       setName("");
       setEmail("");
-      setAttendees([]);
-      setNewAttendee("");
+      setAttendees([]); // ✅ reset to empty again
     } catch {
       setStatus({ type: "error", message: "Network error. Is your backend running?" });
     }
@@ -196,57 +189,40 @@ export default function HomePage() {
 
               {/* ✅ Attendees */}
               <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-4 pooh-shadow">
-                <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">Attendees (optional)</div>
+                <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">Attendees</div>
 
-                {/* ✅ Add row: button stretches to fill space */}
-                <div className="flex gap-2">
-                  <input
-                    className="flex-[2] rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] placeholder:text-[#B08968] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
-                    placeholder={`Family member ${attendees.length + 1}`}
-                    value={newAttendee}
-                    onChange={(e) => setNewAttendee(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter") {
-                        e.preventDefault();
-                        addAttendee();
-                      }
-                    }}
-                  />
+                {/* Attendee inputs (none shown until user clicks add) */}
+                <div className="grid gap-3">
+                  {attendees.map((val, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input
+                        className="flex-1 rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] placeholder:text-[#B08968] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
+                        placeholder={`Family member ${idx + 1}`}
+                        value={val}
+                        onChange={(e) => updateAttendee(idx, e.target.value)}
+                      />
 
-                  <button
-                    type="button"
-                    onClick={addAttendee}
-                    className="flex-1 rounded-xl bg-[#F6C453] px-4 py-2 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
-                  >
-                    + Add member
-                  </button>
+                      <button
+                        type="button"
+                        onClick={() => removeAttendeeRow(idx)}
+                        className="rounded-xl border border-[#F6C453]/60 bg-white px-3 text-[#5A3E2B] hover:bg-white/80"
+                        aria-label={`Remove family member ${idx + 1}`}
+                        title="Remove"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
                 </div>
 
-                {/* ✅ List */}
-                {attendees.length > 0 && (
-                  <div className="mt-3 grid gap-3">
-                    {attendees.map((val, idx) => (
-                      <div key={idx} className="flex gap-2">
-                        <input
-                          className="flex-1 rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] placeholder:text-[#B08968] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
-                          placeholder={`Family member ${idx + 1}`}
-                          value={val}
-                          onChange={(e) => updateAttendee(idx, e.target.value)}
-                        />
-
-                        <button
-                          type="button"
-                          onClick={() => removeAttendeeRow(idx)}
-                          className="rounded-xl border border-[#F6C453]/60 bg-white px-3 text-[#5A3E2B] hover:bg-white/80"
-                          aria-label={`Remove family member ${idx + 1}`}
-                          title="Remove"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                {/* ✅ Button BELOW all boxes (and full width) */}
+                <button
+                  type="button"
+                  onClick={addAttendeeRow}
+                  className="mt-3 w-full rounded-xl bg-[#F6C453] px-4 py-3 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
+                >
+                  + Add member
+                </button>
               </div>
 
               <button
