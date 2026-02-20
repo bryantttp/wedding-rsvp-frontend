@@ -15,8 +15,10 @@ export default function HomePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // ✅ NEW: attendees list
+  // ✅ attendees list (no rows by default)
   const [attendees, setAttendees] = useState<string[]>([]);
+  // ✅ single input to add one attendee at a time
+  const [newAttendee, setNewAttendee] = useState("");
 
   const [status, setStatus] = useState<Status>({ type: "idle", message: "" });
   const year = useMemo(() => new Date().getFullYear(), []);
@@ -51,12 +53,17 @@ export default function HomePage() {
     setAttendees((prev) => prev.map((a, i) => (i === idx ? value : a)));
   }
 
-  function addAttendeeRow() {
-    setAttendees((prev) => [...prev, ""]);
+  // ✅ add 1 attendee at a time from newAttendee
+  function addAttendee() {
+    const trimmed = newAttendee.trim();
+    if (!trimmed) return;
+    setAttendees((prev) => [...prev, trimmed]);
+    setNewAttendee("");
   }
 
+  // ✅ allow removing ANY attendee, including the first
   function removeAttendeeRow(idx: number) {
-    setAttendees((prev) => (prev.length <= 1 ? prev : prev.filter((_, i) => i !== idx)));
+    setAttendees((prev) => prev.filter((_, i) => i !== idx));
   }
 
   async function onSubmit(e: React.FormEvent) {
@@ -70,11 +77,7 @@ export default function HomePage() {
       return;
     }
 
-    if (cleanedAttendees.length === 0) {
-      setStatus({ type: "error", message: "Please add at least 1 attendee." });
-      return;
-    }
-
+    // ✅ attendees not compulsory now
     const payload = {
       name: name.trim(),
       email: email.trim(),
@@ -99,7 +102,8 @@ export default function HomePage() {
 
       setName("");
       setEmail("");
-      setAttendees([""]);
+      setAttendees([]);
+      setNewAttendee("");
     } catch {
       setStatus({ type: "error", message: "Network error. Is your backend running?" });
     }
@@ -114,10 +118,18 @@ export default function HomePage() {
             <div className="text-xs tracking-[0.28em] uppercase text-[#5A3E2B]/80">wedding rsvp</div>
 
             <div className="hidden gap-6 text-sm text-[#5A3E2B]/80 md:flex">
-              <a className="hover:text-[#5A3E2B]" href="#home">Home</a>
-              <a className="hover:text-[#5A3E2B]" href="#our-story">Our Story</a>
-              <a className="hover:text-[#5A3E2B]" href="#faq">FAQ</a>
-              <a className="hover:text-[#5A3E2B]" href="#rsvp">RSVP</a>
+              <a className="hover:text-[#5A3E2B]" href="#home">
+                Home
+              </a>
+              <a className="hover:text-[#5A3E2B]" href="#our-story">
+                Our Story
+              </a>
+              <a className="hover:text-[#5A3E2B]" href="#faq">
+                FAQ
+              </a>
+              <a className="hover:text-[#5A3E2B]" href="#rsvp">
+                RSVP
+              </a>
             </div>
 
             <a
@@ -160,9 +172,7 @@ export default function HomePage() {
         <section id="rsvp" className="fade-section pb-24 pt-10 md:pb-32">
           <div className="fade-stagger rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7] p-6 text-[#5A3E2B] pooh-shadow md:p-10">
             <h2 className="font-serif text-3xl md:text-4xl">Kindly Let Us Know</h2>
-            <p className="mt-3 max-w-2xl text-[#5A3E2B]/80">
-              Please RSVP below (name, email, and attendees).
-            </p>
+            <p className="mt-3 max-w-2xl text-[#5A3E2B]/80">Please RSVP below (name, email, and attendees).</p>
 
             <form onSubmit={onSubmit} className="mt-8 grid gap-4">
               <div className="grid gap-4 md:grid-cols-2">
@@ -184,42 +194,59 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* ✅ Attendees dynamic list */}
+              {/* ✅ Attendees */}
               <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-4 pooh-shadow">
-                <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">
-                  Attendees
+                <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">Attendees (optional)</div>
+
+                {/* ✅ Add row: button stretches to fill space */}
+                <div className="flex gap-2">
+                  <input
+                    className="flex-[2] rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] placeholder:text-[#B08968] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
+                    placeholder={`Family member ${attendees.length + 1}`}
+                    value={newAttendee}
+                    onChange={(e) => setNewAttendee(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addAttendee();
+                      }
+                    }}
+                  />
+
+                  <button
+                    type="button"
+                    onClick={addAttendee}
+                    className="flex-1 rounded-xl bg-[#F6C453] px-4 py-2 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
+                  >
+                    + Add member
+                  </button>
                 </div>
 
-                <div className="grid gap-3">
-                  {attendees.map((val, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        className="flex-1 rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] placeholder:text-[#B08968] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
-                        placeholder={`Family member ${idx + 1}`}
-                        value={val}
-                        onChange={(e) => updateAttendee(idx, e.target.value)}
-                      />
+                {/* ✅ List */}
+                {attendees.length > 0 && (
+                  <div className="mt-3 grid gap-3">
+                    {attendees.map((val, idx) => (
+                      <div key={idx} className="flex gap-2">
+                        <input
+                          className="flex-1 rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] placeholder:text-[#B08968] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
+                          placeholder={`Family member ${idx + 1}`}
+                          value={val}
+                          onChange={(e) => updateAttendee(idx, e.target.value)}
+                        />
 
-                      <button
-                        type="button"
-                        onClick={() => removeAttendeeRow(idx)}
-                        disabled={attendees.length <= 1}
-                        className="rounded-xl border border-[#F6C453]/60 bg-white px-3 text-[#5A3E2B] hover:bg-white/80 disabled:opacity-50"
-                        aria-label="Remove attendee"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-
-                <button
-                  type="button"
-                  onClick={addAttendeeRow}
-                  className="mt-3 rounded-xl bg-[#F6C453] px-4 py-2 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
-                >
-                  + Add another
-                </button>
+                        <button
+                          type="button"
+                          onClick={() => removeAttendeeRow(idx)}
+                          className="rounded-xl border border-[#F6C453]/60 bg-white px-3 text-[#5A3E2B] hover:bg-white/80"
+                          aria-label={`Remove family member ${idx + 1}`}
+                          title="Remove"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <button
@@ -240,9 +267,7 @@ export default function HomePage() {
           </div>
         </section>
 
-        <footer className="pb-10 text-center text-xs text-[#5A3E2B]/60">
-          © {year} Wedding RSVP
-        </footer>
+        <footer className="pb-10 text-center text-xs text-[#5A3E2B]/60">© {year} Wedding RSVP</footer>
       </main>
     </div>
   );
