@@ -259,13 +259,21 @@ export default function AdminPage() {
   }
 
   function exportCsv() {
-    const header = ["Group", "Email", "Created", "Attendee #", "Attendee"].join(",");
+    // ✅ One row per RSVP document (group), not per attendee
+    const header = ["Group Name", "Email", "Created", "Attendees"].join(",");
 
-    const lines = flatRows.map((r) => {
-      const created = formatDate(r.createdAt) || "";
-      const attNo = r.attendeeIndex === 0 ? "" : String(r.attendeeIndex);
+    const lines = grouped.map((g) => {
+      const created = formatDate(g.rsvp.createdAt) || "";
+      const attendeesText =
+        g.attendees.length > 0 ? g.attendees.join(" | ") : ""; // or "(No attendees added)"
 
-      const cells = [String(r.groupIndex), r.email, created, attNo, r.attendeeName].map(csvEscape);
+      const cells = [
+        g.rsvp.name ?? "",
+        g.rsvp.email ?? "",
+        created,
+        attendeesText,
+      ].map(csvEscape);
+
       return cells.join(",");
     });
 
@@ -275,7 +283,7 @@ export default function AdminPage() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `rsvps-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `rsvps-groups-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
