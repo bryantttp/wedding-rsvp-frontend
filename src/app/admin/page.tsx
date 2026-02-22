@@ -13,7 +13,7 @@ type Rsvp = {
   id: string;
   name: string;
   email: string;
-  listOfAttendees?: string[];
+  additionalCount?: number; // ✅ NEW
   createdAt?: FirestoreTimestamp;
 };
 
@@ -31,16 +31,6 @@ function formatDate(ts?: FirestoreTimestamp): string {
   return new Date(ms).toLocaleString();
 }
 
-type FlatRow = {
-  groupIndex: number;
-  rsvpId: string;
-  groupName: string;
-  email: string;
-  createdAt?: FirestoreTimestamp;
-  attendeeIndex: number;
-  attendeeName: string;
-};
-
 function csvEscape(value: string) {
   const v = value ?? "";
   if (/[",\n]/.test(v)) return `"${v.replaceAll('"', '""')}"`;
@@ -55,6 +45,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
+  // password gate
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
 
@@ -94,67 +85,25 @@ export default function AdminPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [unlocked]);
 
-  const grouped = useMemo(() => {
-    const sorted = [...data].sort((a, b) => {
+  const rows = useMemo(() => {
+    // sort by createdAt asc
+    return [...data].sort((a, b) => {
       const am = toMillis(a.createdAt) ?? 0;
       const bm = toMillis(b.createdAt) ?? 0;
       return am - bm;
     });
-
-    return sorted.map((rsvp, idx) => ({
-      groupIndex: idx + 1,
-      rsvp,
-      attendees: (rsvp.listOfAttendees ?? []).map((s) => s.trim()).filter(Boolean),
-    }));
   }, [data]);
 
-  const flatRows = useMemo<FlatRow[]>(() => {
-    const rows: FlatRow[] = [];
-
-    for (const g of grouped) {
-      const attendees = g.attendees;
-
-      if (attendees.length === 0) {
-        rows.push({
-          groupIndex: g.groupIndex,
-          rsvpId: g.rsvp.id,
-          groupName: g.rsvp.name ?? "",
-          email: g.rsvp.email ?? "",
-          createdAt: g.rsvp.createdAt,
-          attendeeIndex: 0,
-          attendeeName: "(No attendees added)",
-        });
-        continue;
-      }
-
-      attendees.forEach((name, i) => {
-        rows.push({
-          groupIndex: g.groupIndex,
-          rsvpId: g.rsvp.id,
-          groupName: g.rsvp.name ?? "",
-          email: g.rsvp.email ?? "",
-          createdAt: g.rsvp.createdAt,
-          attendeeIndex: i + 1,
-          attendeeName: name,
-        });
-      });
-    }
-
-    return rows;
-  }, [grouped]);
-
-  // ✅ rowSpan counts per RSVP id (so we can merge cells)
-  const rowSpanByRsvpId = useMemo(() => {
-    const map = new Map<string, number>();
-    for (const r of flatRows) map.set(r.rsvpId, (map.get(r.rsvpId) ?? 0) + 1);
-    return map;
-  }, [flatRows]);
-
   const totalSubmissions = data.length;
-  const totalAttendees = useMemo(() => {
-    let n = 0;
-    for (const r of data) n += (r.listOfAttendees ?? []).filter((x) => x?.trim()).length;
-    return n;
+
+  const totalGuests = useMemo(() => {
+    // total people = 1 main + additionalCount (clamped)
+    let sum = 0;
+    for (const r of data) {
+      const add = Number.isFinite(r.additionalCount) ? Number(r.additionalCount) : 0;
+      sum += 1 + Math.max(0, Math.min(10, add));
+    }
+    return sum;
   }, [data]);
 
   const allIds = useMemo(() => data.map((d) => d.id), [data]);
@@ -274,40 +223,25 @@ export default function AdminPage() {
   }
 
   function exportCsv() {
-    const header = ["Group", "Group Name", "Email", "Created", "Attendee"].join(",");
+    // ✅ one row per RSVP doc
+    const header = ["Name", "Email", "Created", "Additional Count", "Total Guests"].join(",");
 
-    const lines: string[] = [];
+    const lines = rows.map((r) => {
+      const created = formatDate(r.createdAt) || "";
+      const addRaw = Number.isFinite(r.additionalCount) ? Number(r.additionalCount) : 0;
+      const add = Math.max(0, Math.min(10, addRaw));
+      const total = 1 + add;
 
-    for (const g of grouped) {
-      const created = formatDate(g.rsvp.createdAt) || "";
-
-      // 1) Group header row (attendee column = group name)
-      lines.push(
-        [
-          String(g.groupIndex),
-          g.rsvp.name ?? "",
-          g.rsvp.email ?? "",
-          created,
-          g.rsvp.name ?? "", // ✅ attendee column = group name
-        ].map(csvEscape).join(",")
-      );
-
-      // 2) Attendee rows (ONLY attendee name)
-      for (const a of g.attendees) {
-        lines.push(
-          [
-            "",
-            "",
-            "",
-            "",
-            a, // ✅ attendee only (no group name prefix)
-          ].map(csvEscape).join(",")
-        );
-      }
-
-      // Blank line between groups
-      lines.push("");
-    }
+      return [
+        r.name ?? "",
+        r.email ?? "",
+        created,
+        String(add),
+        String(total),
+      ]
+        .map(csvEscape)
+        .join(",");
+    });
 
     const csv = [header, ...lines].join("\n");
     const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
@@ -315,7 +249,7 @@ export default function AdminPage() {
 
     const a = document.createElement("a");
     a.href = url;
-    a.download = `rsvps-grouped-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `rsvps-${new Date().toISOString().slice(0, 10)}.csv`;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -335,7 +269,13 @@ export default function AdminPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Password"
-            style={{ width: "100%", padding: "12px 12px", borderRadius: 10, border: "1px solid #ddd", outline: "none" }}
+            style={{
+              width: "100%",
+              padding: "12px 12px",
+              borderRadius: 10,
+              border: "1px solid #ddd",
+              outline: "none",
+            }}
           />
 
           <button type="submit" style={{ marginTop: 12, width: "100%", padding: "12px 14px", cursor: "pointer" }}>
@@ -354,19 +294,28 @@ export default function AdminPage() {
   // UNLOCKED
   return (
     <main style={{ maxWidth: 1200, margin: "48px auto", padding: 16, fontFamily: "Arial, sans-serif" }}>
-      <header style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
+      <header
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "flex-start",
+          gap: 12,
+          flexWrap: "wrap",
+        }}
+      >
         <div>
           <h1 style={{ fontSize: 28, margin: 0 }}>Admin — RSVPs</h1>
           <p style={{ marginTop: 6, opacity: 0.75 }}>
-            Total submissions: <strong>{totalSubmissions}</strong> · Total attendees: <strong>{totalAttendees}</strong>
+            Total submissions: <strong>{totalSubmissions}</strong> · Estimated total guests:{" "}
+            <strong>{totalGuests}</strong>
           </p>
         </div>
 
         <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
           <button
             onClick={exportCsv}
-            disabled={loading || grouped.length === 0}
-            style={{ padding: "10px 14px", cursor: loading || grouped.length === 0 ? "not-allowed" : "pointer" }}
+            disabled={loading || rows.length === 0}
+            style={{ padding: "10px 14px", cursor: loading || rows.length === 0 ? "not-allowed" : "pointer" }}
           >
             Export CSV
           </button>
@@ -402,7 +351,7 @@ export default function AdminPage() {
 
       {!loading && !error && data.length > 0 && (
         <section style={{ marginTop: 18 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>Attendee checklist view</h2>
+          <h2 style={{ fontSize: 18, marginBottom: 10 }}>RSVP list</h2>
 
           <div style={{ overflowX: "auto", border: "1px solid #ddd", borderRadius: 10 }}>
             <table style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -413,80 +362,66 @@ export default function AdminPage() {
                       type="checkbox"
                       checked={allSelected}
                       onChange={toggleSelectAll}
-                      aria-label="Select all RSVP groups"
+                      aria-label="Select all RSVPs"
                     />
                   </th>
-                  <th style={th}>Group</th>
-                  <th style={th}>Main name</th>
+                  <th style={th}>Name</th>
                   <th style={th}>Email</th>
                   <th style={th}>Created</th>
-                  <th style={th}>#</th>
-                  <th style={th}>Attendee</th>
+                  <th style={th}>Additional Count</th>
+                  <th style={th}>Total Guests</th>
                   <th style={th}>Actions</th>
                 </tr>
               </thead>
 
               <tbody>
-                {(() => {
-                  const seen = new Set<string>();
+                {rows.map((r) => {
+                  const checked = selectedIds.has(r.id);
+                  const addRaw = Number.isFinite(r.additionalCount) ? Number(r.additionalCount) : 0;
+                  const add = Math.max(0, Math.min(10, addRaw));
+                  const total = 1 + add;
 
-                  return flatRows.map((row, idx) => {
-                    const first = !seen.has(row.rsvpId);
-                    if (first) seen.add(row.rsvpId);
-
-                    const span = rowSpanByRsvpId.get(row.rsvpId) ?? 1;
-                    const checked = selectedIds.has(row.rsvpId);
-
-                    return (
-                      <tr key={`${row.rsvpId}-${idx}`}>
-                        {first ? (
-                          <td style={td} rowSpan={span}>
-                            <input
-                              type="checkbox"
-                              checked={checked}
-                              onChange={() => toggleSelect(row.rsvpId)}
-                              aria-label={`Select group ${row.groupIndex}`}
-                            />
-                          </td>
-                        ) : null}
-
-                        {first ? <td style={td} rowSpan={span}>{row.groupIndex}</td> : null}
-                        {first ? <td style={td} rowSpan={span}>{row.groupName || "-"}</td> : null}
-                        {first ? <td style={td} rowSpan={span}>{row.email}</td> : null}
-                        {first ? <td style={td} rowSpan={span}>{formatDate(row.createdAt) || "-"}</td> : null}
-
-                        <td style={td}>{row.attendeeIndex === 0 ? "-" : row.attendeeIndex}</td>
-                        <td style={td}>{row.attendeeName}</td>
-
-                        {first ? (
-                          <td style={td} rowSpan={span}>
-                            <button
-                              type="button"
-                              onClick={() => deleteRsvpById(row.rsvpId)}
-                              disabled={loading}
-                              style={{
-                                padding: "6px 10px",
-                                borderRadius: 8,
-                                border: "1px solid #d33",
-                                background: "white",
-                                color: "#d33",
-                                cursor: loading ? "not-allowed" : "pointer",
-                              }}
-                            >
-                              Delete
-                            </button>
-                          </td>
-                        ) : null}
-                      </tr>
-                    );
-                  });
-                })()}
+                  return (
+                    <tr key={r.id}>
+                      <td style={td}>
+                        <input
+                          type="checkbox"
+                          checked={checked}
+                          onChange={() => toggleSelect(r.id)}
+                          aria-label={`Select ${r.name}`}
+                        />
+                      </td>
+                      <td style={td}>{r.name || "-"}</td>
+                      <td style={td}>{r.email || "-"}</td>
+                      <td style={td}>{formatDate(r.createdAt) || "-"}</td>
+                      <td style={td}>{add}</td>
+                      <td style={td}>{total}</td>
+                      <td style={td}>
+                        <button
+                          type="button"
+                          onClick={() => deleteRsvpById(r.id)}
+                          disabled={loading}
+                          style={{
+                            padding: "6px 10px",
+                            borderRadius: 8,
+                            border: "1px solid #d33",
+                            background: "white",
+                            color: "#d33",
+                            cursor: loading ? "not-allowed" : "pointer",
+                          }}
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
 
           <p style={{ marginTop: 10, opacity: 0.7, fontSize: 12 }}>
-            Checkboxes apply to RSVP groups (each Firestore document). Deleting is a hard delete.
+            Deleting is a hard delete. “Additional Count” is clamped to 0–10.
           </p>
         </section>
       )}
