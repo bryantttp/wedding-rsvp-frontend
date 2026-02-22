@@ -15,8 +15,8 @@ export default function HomePage() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
 
-  // ✅ attendees list (EMPTY by default)
-  const [attendees, setAttendees] = useState<string[]>([]);
+  // ✅ NEW: just a count (0 = no additional attendees)
+  const [additionalCount, setAdditionalCount] = useState<number>(0);
 
   const [status, setStatus] = useState<Status>({ type: "idle", message: "" });
   const year = useMemo(() => new Date().getFullYear(), []);
@@ -47,35 +47,24 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []);
 
-  function updateAttendee(idx: number, value: string) {
-    setAttendees((prev) => prev.map((a, i) => (i === idx ? value : a)));
-  }
-
-  // ✅ add a NEW blank row each time
-  function addAttendeeRow() {
-    setAttendees((prev) => [...prev, ""]);
-  }
-
-  // ✅ remove ANY row (including the first)
-  function removeAttendeeRow(idx: number) {
-    setAttendees((prev) => prev.filter((_, i) => i !== idx));
-  }
-
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     setStatus({ type: "loading", message: "Sending your RSVP..." });
+
+    if (!API_BASE) {
+      setStatus({ type: "error", message: "Missing NEXT_PUBLIC_API_BASE_URL" });
+      return;
+    }
 
     if (!name.trim() || !email.trim()) {
       setStatus({ type: "error", message: "Please fill in name and email." });
       return;
     }
 
-    const cleanedAttendees = attendees.map((a) => a.trim()).filter(Boolean);
-
     const payload = {
       name: name.trim(),
       email: email.trim(),
-      listOfAttendees: cleanedAttendees, // can be []
+      additionalAttendeeCount: Number(additionalCount) || 0,
     };
 
     try {
@@ -96,7 +85,7 @@ export default function HomePage() {
 
       setName("");
       setEmail("");
-      setAttendees([]); // ✅ reset to empty again
+      setAdditionalCount(0); // ✅ reset
     } catch {
       setStatus({ type: "error", message: "Network error. Is your backend running?" });
     }
@@ -155,23 +144,16 @@ export default function HomePage() {
       </section>
 
       <main className="mx-auto max-w-6xl px-5">
-
         {/* VENUE */}
         <section id="venue" className="fade-section py-20 md:py-28">
-          <h2 className="font-serif text-3xl text-[#5A3E2B] md:text-4xl">
-            Venue & Reception
-          </h2>
+          <h2 className="font-serif text-3xl text-[#5A3E2B] md:text-4xl">Venue & Reception</h2>
 
           <div className="mt-8 grid gap-8 md:grid-cols-2">
             {/* LEFT: DETAILS */}
             <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-6 pooh-shadow">
-              <h3 className="text-xl font-semibold text-[#5A3E2B]">
-                Orchard Hotel Singapore
-              </h3>
+              <h3 className="text-xl font-semibold text-[#5A3E2B]">Orchard Hotel Singapore</h3>
 
-              <p className="mt-3 text-[#5A3E2B]/80">
-                442 Orchard Road, Singapore 238879
-              </p>
+              <p className="mt-3 text-[#5A3E2B]/80">442 Orchard Road, Singapore 238879</p>
 
               <p className="mt-4 text-[#5A3E2B]/90">
                 <strong>Reception:</strong> 13 June 2026, 6:30 PM
@@ -210,7 +192,9 @@ export default function HomePage() {
         <section id="rsvp" className="fade-section pb-24 pt-10 md:pb-32">
           <div className="fade-stagger rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7] p-6 text-[#5A3E2B] pooh-shadow md:p-10">
             <h2 className="font-serif text-3xl md:text-4xl">Kindly Let Us Know</h2>
-            <p className="mt-3 max-w-2xl text-[#5A3E2B]/80">Please RSVP below (name, email, and additional family members).</p>
+            <p className="mt-3 max-w-2xl text-[#5A3E2B]/80">
+              Please RSVP below (name, email, and number of additional guests).
+            </p>
 
             <form onSubmit={onSubmit} className="mt-8 grid gap-4">
               <div className="grid gap-4 md:grid-cols-2">
@@ -232,42 +216,40 @@ export default function HomePage() {
                 />
               </div>
 
-              {/* ✅ Attendees */}
+              {/* ✅ Additional guest count */}
               <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-4 pooh-shadow">
-                <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">Family Members</div>
-
-                {/* Attendee inputs (none shown until user clicks add) */}
-                <div className="grid gap-3">
-                  {attendees.map((val, idx) => (
-                    <div key={idx} className="flex gap-2">
-                      <input
-                        className="flex-1 rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] placeholder:text-[#B08968] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
-                        placeholder={`Family member ${idx + 1}`}
-                        value={val}
-                        onChange={(e) => updateAttendee(idx, e.target.value)}
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => removeAttendeeRow(idx)}
-                        className="rounded-xl border border-[#F6C453]/60 bg-white px-3 text-[#5A3E2B] hover:bg-white/80"
-                        aria-label={`Remove family member ${idx + 1}`}
-                        title="Remove"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
+                <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">
+                  Additional guests (excluding yourself)
                 </div>
 
-                {/* ✅ Button BELOW all boxes (and full width) */}
-                <button
-                  type="button"
-                  onClick={addAttendeeRow}
-                  className="mt-3 w-full rounded-xl bg-[#F6C453] px-4 py-3 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
-                >
-                  + Add member
-                </button>
+                <input
+                  type="number"
+                  inputMode="numeric"
+                  min={0}
+                  max={10}
+                  step={1}
+                  value={additionalCount}
+                  onChange={(e) => {
+                    // allow clearing while typing, then clamp on blur
+                    const raw = e.target.value;
+                    if (raw === "") {
+                      setAdditionalCount(0);
+                      return;
+                    }
+
+                    const n = Number(raw);
+                    if (Number.isNaN(n)) return;
+
+                    // clamp between 0 and 10
+                    const clamped = Math.min(10, Math.max(0, Math.trunc(n)));
+                    setAdditionalCount(clamped);
+                  }}
+                  onBlur={() => {
+                    // final safety clamp
+                    setAdditionalCount((prev) => Math.min(10, Math.max(0, Math.trunc(prev))));
+                  }}
+                  className="w-full rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
+                />
               </div>
 
               <button
