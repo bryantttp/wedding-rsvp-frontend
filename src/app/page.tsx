@@ -64,7 +64,7 @@ export default function HomePage() {
     const payload = {
       name: name.trim(),
       email: email.trim(),
-      additionalAttendeeCount: Number(additionalCount) || 0,
+      additionalCount: Number(additionalCount) || 0,
     };
 
     try {
