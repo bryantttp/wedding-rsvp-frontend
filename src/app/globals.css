@@ -252,13 +252,3 @@ html {
     text-align: center;
   }
 }
-
-/* ✅ iOS Safari fallback: fixed backgrounds can be janky */
-@media (max-width: 767px) {
-  @supports (-webkit-touch-callout: none) {
-    body::before,
-    body::after {
-      position: absolute;
-    }
-  }
-}
