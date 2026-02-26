@@ -8,6 +8,9 @@
   --pooh-honey-dark: #eab543;
   --pooh-brown: #5a3e2b;
   --pooh-red: #b83a2d;
+
+  /* ✅ IMPORTANT: define this globally so body::before can use it */
+  --hero-bg-url: url("/storybook-bg.jpg");
 }
 
 html,
@@ -15,18 +18,43 @@ body {
   height: 100%;
 }
 
+/* ✅ Let the global fixed background show through */
 body {
-  background: var(--pooh-cream);
+  background: transparent;
   color: var(--pooh-brown);
 }
 
-/* Optional: subtle paper texture using gradients (no image needed) */
+/* ✅ GLOBAL fixed storybook background (covers EVERYTHING) */
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+
+  background-image: var(--hero-bg-url);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  z-index: -2;
+  pointer-events: none;
+}
+
+/* ✅ Overlay: make it LIGHT (not grey / dark) */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+
+  /* was rgba(0,0,0,0.25) → that’s why it looked grey */
+  background: rgba(255, 248, 231, 0.10);
+
+  z-index: -1;
+  pointer-events: none;
+}
+
+/* ✅ IMPORTANT: this was creating the "separation" / different background */
 .pooh-paper {
-  background:
-    radial-gradient(1000px 600px at 20% 10%, rgba(246, 196, 83, 0.18), transparent 60%),
-    radial-gradient(900px 500px at 80% 30%, rgba(184, 58, 45, 0.10), transparent 55%),
-    radial-gradient(900px 700px at 50% 90%, rgba(90, 62, 43, 0.10), transparent 55%),
-    linear-gradient(180deg, var(--pooh-cream), var(--pooh-paper));
+  background: transparent !important;
 }
 
 /* Gentle “storybook” shadow */
@@ -39,14 +67,14 @@ html {
   scroll-behavior: smooth;
 }
 
-#venue, #rsvp {
+#venue,
+#rsvp {
   scroll-margin-top: 120px;
 }
 
 /* =========================
-   HERO (Desktop)
-   - background image = storybook
-   - inner div = your photo
+   HERO
+   - no longer paints background here (global bg handles it)
    ========================= */
 
 .hero-frame {
@@ -55,29 +83,10 @@ html {
   isolation: isolate;
 }
 
-/* Desktop storybook background (full section) */
-.hero-frame::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background-image: var(--hero-bg-url);
-  background-size: cover;
-  background-position: center;
-  filter: saturate(0.95) contrast(1.05);
-  opacity: 1;
-  z-index: 0;
-}
-
-/* Slight cinematic overlay so your window pops */
+/* ✅ Remove hero background layers so it doesn't "double stack" */
+.hero-frame::before,
 .hero-frame::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at center, rgba(0,0,0,0) 0%, rgba(0,0,0,0.35) 60%, rgba(0,0,0,0.70) 100%),
-    linear-gradient(180deg, rgba(0,0,0,0.25), rgba(0,0,0,0.45));
-  pointer-events: none;
-  z-index: 1;
+  display: none !important;
 }
 
 /* The rounded “window” */
@@ -98,7 +107,7 @@ html {
   background-size: cover;
 
   /* Default: centered. You can override via vars in TSX */
-  background-position: var(--hero-photo-pos, 35% 35%);  
+  background-position: var(--hero-photo-pos, 35% 35%);
 
   /* Optional: small zoom for nicer crop */
   transform: scale(var(--hero-photo-scale, 1.02));
@@ -129,10 +138,10 @@ html {
 /* Text wrapper sits above everything */
 .hero-copy {
   position: absolute;
-  inset: 0; 
+  inset: 0;
   z-index: 3;
   display: flex;
-  align-items: flex-end; /* bottom */
+  align-items: flex-end;
   padding: 24px;
 }
 
@@ -158,7 +167,7 @@ html {
   transition: opacity 0.7s ease, transform 0.7s ease;
 }
 
-.hero-panel{
+.hero-panel {
   padding: 18px;
 }
 
@@ -176,23 +185,14 @@ html {
    NAV solid bar (desktop)
    ========================= */
 .nav-solid {
-  background: rgba(255, 248, 231, 0.96); /* solid-ish Pooh cream */
+  background: rgba(255, 248, 231, 0.96);
   border-color: rgba(246, 196, 83, 0.45);
 }
 
 /* =========================
    MOBILE HERO
-   - NO storybook background
-   - ONLY your photo
-   - wording inside grey border panel
    ========================= */
 @media (max-width: 767px) {
-  /* Remove desktop background + overlays */
-  .hero-frame::before,
-  .hero-frame::after {
-    display: none !important;
-  }
-
   .hero-glass-ring {
     background: none !important;
   }
@@ -201,15 +201,14 @@ html {
     width: 100% !important;
     height: 80svh !important;
     aspect-ratio: auto !important;
-    border-radius: 18px !important;         /* ✅ rounded inside frame */
+    border-radius: 18px !important;
     overflow: hidden !important;
     box-shadow: none !important;
     border: none !important;
     background: none !important;
-    margin-top: 20svh;
+    margin-top: 5svh;
   }
 
-  /* Photo becomes full mobile background */
   .hero-media {
     transform: none !important;
     background-position: 55% 50% !important;
@@ -221,27 +220,18 @@ html {
 
   .hero-frame {
     min-height: 100svh !important;
-    padding: 16px !important;   /* frame thickness */
-
-    /* Use your desktop storybook background instead of yellow */
-    background-image: var(--hero-bg-url) !important;
-    background-size: cover !important;
-    background-position: center !important;
-    background-repeat: no-repeat !important;
+    padding: 16px !important;
     box-sizing: border-box;
   }
 
-  /* =========================
-     TEXT POSITIONING (FIXED)
-     ========================= */
   .hero-copy {
     position: absolute;
     inset: 0;
     display: flex;
-    justify-content: center;     /* center horizontally */
-    align-items: flex-start;     /* push upward */
+    justify-content: center;
+    align-items: flex-start;
     padding: 0 16px;
-    padding-top: 5svh;          /* 👈 controls vertical height (safe for iPhone notch) */
+    padding-top: 5svh;
   }
 
   .hero-panel h1 {
@@ -253,7 +243,6 @@ html {
     font-size: 0.95rem;
   }
 
-  /* Glass panel */
   .hero-copy > .hero-panel {
     width: min(92vw, 560px);
     border-radius: 26px;
@@ -261,5 +250,15 @@ html {
     background: rgba(255, 248, 231, 0.75);
     border: none !important;
     text-align: center;
+  }
+}
+
+/* ✅ iOS Safari fallback: fixed backgrounds can be janky */
+@media (max-width: 767px) {
+  @supports (-webkit-touch-callout: none) {
+    body::before,
+    body::after {
+      position: absolute;
+    }
   }
 }

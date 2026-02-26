@@ -146,44 +146,55 @@ export default function HomePage() {
       <main className="mx-auto max-w-6xl px-5">
         {/* VENUE */}
         <section id="venue" className="fade-section py-20 md:py-28">
-          <h2 className="font-serif text-3xl text-[#5A3E2B] md:text-4xl">Venue & Reception</h2>
 
-          <div className="mt-8 grid gap-8 md:grid-cols-2">
-            {/* LEFT: DETAILS */}
-            <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-6 pooh-shadow">
-              <h3 className="text-xl font-semibold text-[#5A3E2B]">Orchard Hotel Singapore</h3>
+          {/* ✅ SAME SHADE PANEL AS RSVP */}
+          <div className="rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7]/95 p-6 pooh-shadow md:p-10">
 
-              <p className="mt-3 text-[#5A3E2B]/80">442 Orchard Road, Singapore 238879</p>
+            <h2 className="font-serif text-3xl text-[#5A3E2B] md:text-4xl">
+              Venue & Reception
+            </h2>
 
-              <p className="mt-4 text-[#5A3E2B]/90">
-                <strong>Reception:</strong> 13 June 2026, 6:30 PM
-              </p>
+            <div className="mt-8 grid gap-8 md:grid-cols-2">
 
-              <div className="mt-5 space-y-2 text-[#5A3E2B]/80">
-                <p>🍷 Free-flow wine & beer</p>
-                <p>🍾 No corkage fee</p>
-                <p>🚗 Taxi / Grab recommended (Orchard area)</p>
+              {/* LEFT: DETAILS */}
+              <div className="rounded-2xl border border-[#F6C453]/35 bg-white/70 p-6 pooh-shadow">
+                <h3 className="text-xl font-semibold text-[#5A3E2B]">
+                  Orchard Hotel Singapore
+                </h3>
+
+                <p className="mt-3 text-[#5A3E2B]/80">
+                  442 Orchard Road, Singapore 238879
+                </p>
+
+                <p className="mt-4 text-[#5A3E2B]/90">
+                  <strong>Reception:</strong> 13 June 2026, 6:30 PM
+                </p>
+
+                <div className="mt-5 space-y-2 text-[#5A3E2B]/80">
+                  <p>🍷 Free-flow wine & beer</p>
+                  <p>🍾 No corkage fee</p>
+                </div>
+
+                <a
+                  href="https://maps.app.goo.gl/1ta7W7Ah5dfdKTHy7"
+                  target="_blank"
+                  className="inline-block mt-6 rounded-xl bg-[#F6C453] px-5 py-3 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
+                >
+                  Open in Google Maps
+                </a>
               </div>
 
-              <a
-                href="https://maps.app.goo.gl/1ta7W7Ah5dfdKTHy7"
-                target="_blank"
-                className="inline-block mt-6 rounded-xl bg-[#F6C453] px-5 py-3 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
-              >
-                Open in Google Maps
-              </a>
-            </div>
-
-            {/* RIGHT: GOOGLE MAP */}
-            <div className="overflow-hidden rounded-2xl border border-[#F6C453]/35 pooh-shadow">
-              <iframe
-                src="https://www.google.com/maps?q=Orchard+Hotel+Singapore&output=embed"
-                width="100%"
-                height="100%"
-                style={{ border: 0, minHeight: "360px" }}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              />
+              {/* RIGHT: GOOGLE MAP */}
+              <div className="overflow-hidden rounded-2xl border border-[#F6C453]/35 pooh-shadow">
+                <iframe
+                  src="https://www.google.com/maps?q=Orchard+Hotel+Singapore&output=embed"
+                  width="100%"
+                  height="100%"
+                  style={{ border: 0, minHeight: "360px" }}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                />
+              </div>
             </div>
           </div>
         </section>
