@@ -171,6 +171,7 @@ export default function HomePage() {
                 </p>
 
                 <div className="mt-5 space-y-2 text-[#5A3E2B]/80">
+                  <p>🍽️ Banquet starts at 7pm</p>
                   <p>🍷 Free-flow wine & beer</p>
                   <p>🍾 No corkage fee</p>
                 </div>

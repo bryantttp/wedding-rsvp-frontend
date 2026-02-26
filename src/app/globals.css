@@ -30,7 +30,7 @@ body::before {
   position: fixed;
   inset: 0;
 
-  background-image: var(--hero-bg-url);
+  background-image: var(--hero-bg-url, url("/storybook-bg.jpg"));
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
