@@ -14,6 +14,7 @@ export default function HomePage() {
 
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ✅ NEW: just a count (0 = no additional attendees)
   const [additionalCount, setAdditionalCount] = useState<number>(0);
@@ -45,29 +46,32 @@ export default function HomePage() {
 
     document.querySelectorAll(".fade-section, .fade-stagger").forEach((el) => observer.observe(el));
     return () => observer.disconnect();
-  }, []);
+  }, []); 
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setStatus({ type: "loading", message: "Sending your RSVP..." });
+    if (isSubmitting) return;
 
-    if (!API_BASE) {
-      setStatus({ type: "error", message: "Missing NEXT_PUBLIC_API_BASE_URL" });
-      return;
-    }
-
-    if (!name.trim() || !email.trim()) {
-      setStatus({ type: "error", message: "Please fill in name and email." });
-      return;
-    }
-
-    const payload = {
-      name: name.trim(),
-      email: email.trim(),
-      additionalCount: Number(additionalCount) || 0,
-    };
+    setIsSubmitting(true);
+    setStatus({ type: "loading", message: "Pooh & Piglet are on their way to deliver your RSVP!" });
 
     try {
+      if (!API_BASE) {
+        setStatus({ type: "error", message: "Missing NEXT_PUBLIC_API_BASE_URL" });
+        return;
+      }
+
+      if (!name.trim() || !email.trim()) {
+        setStatus({ type: "error", message: "Please fill in name and email." });
+        return;
+      }
+
+      const payload = {
+        name: name.trim(),
+        email: email.trim(),
+        additionalCount: Number(additionalCount) || 0,
+      };
+
       const res = await fetch(`${API_BASE}/save-rsvp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,9 +89,11 @@ export default function HomePage() {
 
       setName("");
       setEmail("");
-      setAdditionalCount(0); // ✅ reset
+      setAdditionalCount(0);
     } catch {
       setStatus({ type: "error", message: "Network error. Is your backend running?" });
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
@@ -104,7 +110,7 @@ export default function HomePage() {
                 Home
               </a>
               <a className="hover:text-[#5A3E2B]" href="#venue">
-                Venue & Reception
+                Venue
               </a>
             </div>
 
@@ -129,17 +135,51 @@ export default function HomePage() {
           <div className="hero-tint" />
           <div className="hero-glass-ring" />
 
-          <div className="hero-copy">
-            <div className="hero-panel">
-              <h1 className="font-serif text-3xl leading-tight text-[#5A3E2B] md:text-white sm:text-4xl md:text-6xl">
-                Bryant <span className="text-[#F6C453]">&</span> Cindy
-              </h1>
+          {/* ⭐ DATE SECTION AT BOTTOM OF IMAGE */}
+          <div className="hero-date-block">
+            <p className="hero-date-top italic tracking-[0.15em]">
+              joyfully invite you to<br />
+              their wedding celebration
+            </p>
+
+            <div className="hero-date-row">
+              <div className="hero-date-side hero-date-left">
+                <div className="hero-date-line" />
+                <span>SATURDAY</span>
+              </div>
+
+              <div className="hero-date-center">
+                <div className="hero-date-day">13</div>
+                <div className="hero-date-year">2026</div>
+              </div>
+
+              <div className="hero-date-side hero-date-right">
+                <span>JUNE</span>
+                <div className="hero-date-line" />
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="pointer-events-none absolute bottom-6 inset-x-0 flex justify-center">
-          <div className="text-xs tracking-[0.3em] uppercase text-white/70">Scroll</div>
+          {/* Names overlay */}
+          <div className="hero-copy">
+            <div className="hero-panel hero-names">
+              <div>
+                <h1 className="absolute hero-name-left font-fraunces tracking-[0.10em] leading-tight text-[#624a44] sm:text-4xl md:text-6xl">
+                  BRYANT
+                </h1>
+
+                <div className="absolute hero-and flex items-center justify-center gap-4">
+                  <div className="h-[1px] w-16 bg-[#7b8b84] hero-and-line" />
+                  <p className="font-slight italic text-3xl text-[#624a44] sm:text-3xl md:text-4xl hero-and-text">and</p>
+                  <div className="h-[1px] w-16 bg-[#7b8b84] hero-and-line" />
+                </div>
+
+                <h2 className="absolute font-fraunces tracking-[0.10em] leading-tight text-[#624a44] sm:text-4xl md:text-6xl hero-name hero-name-right">
+                  CINDY
+                </h2>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -150,30 +190,27 @@ export default function HomePage() {
           {/* ✅ SAME SHADE PANEL AS RSVP */}
           <div className="rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7]/95 p-6 pooh-shadow md:p-10">
 
-            <h2 className="font-serif text-3xl text-[#5A3E2B] md:text-4xl">
-              Venue & Reception
+            <h2 className="font-fraunces text-3xl text-[#5A3E2B] md:text-4xl">
+              Venue
             </h2>
 
             <div className="mt-8 grid gap-8 md:grid-cols-2">
 
               {/* LEFT: DETAILS */}
               <div className="rounded-2xl border border-[#F6C453]/35 bg-white/70 p-6 pooh-shadow">
-                <h3 className="text-xl font-semibold text-[#5A3E2B]">
+                <h3 className="font-fraunces text-xl font-semibold text-[#5A3E2B]">
                   Orchard Hotel Singapore
                 </h3>
 
-                <p className="mt-3 text-[#5A3E2B]/80">
+                <p className="font-fraunces mt-3 text-[#5A3E2B]/80">
                   442 Orchard Road, Singapore 238879
                 </p>
 
-                <p className="mt-4 text-[#5A3E2B]/90">
-                  <strong>Reception:</strong> 13 June 2026, 6:30 PM
-                </p>
-
-                <div className="mt-5 space-y-2 text-[#5A3E2B]/80">
-                  <p>🍽️ Banquet starts at 7pm</p>
-                  <p>🍷 Free-flow wine & beer</p>
-                  <p>🍾 No corkage fee</p>
+                <div className="font-fraunces mt-5 space-y-2 text-[#5A3E2B]/80">
+                  <p>🥂 <strong>Reception</strong> begins at 6:30pm</p>
+                  <p>🍽️ <strong>Banquet</strong> starts at 7pm</p>
+                  <p>🍷 <strong>Free-flow</strong> wine & beer</p>
+                  <p>🍾 <strong>No corkage fee</strong></p>
                 </div>
 
                 <a
@@ -203,7 +240,7 @@ export default function HomePage() {
         {/* RSVP */}
         <section id="rsvp" className="fade-section pb-24 pt-10 md:pb-32">
           <div className="fade-stagger rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7] p-6 text-[#5A3E2B] pooh-shadow md:p-10">
-            <h2 className="font-serif text-3xl md:text-4xl">Kindly Let Us Know</h2>
+            <h2 className="font-fraunces text-3xl md:text-4xl">Kindly Let Us Know</h2>
             <p className="mt-3 max-w-2xl text-[#5A3E2B]/80">
               Please RSVP below (name, email, and number of additional guests).
             </p>
@@ -266,19 +303,37 @@ export default function HomePage() {
 
               <button
                 type="submit"
-                disabled={status.type === "loading"}
+                disabled={isSubmitting}
                 className="mt-2 rounded-xl bg-[#F6C453] px-5 py-3 text-[#5A3E2B] font-semibold hover:bg-[#EAB543] disabled:opacity-60"
               >
-                {status.type === "loading" ? "Submitting..." : "Submit RSVP"}
+                {isSubmitting ? "Submitting..." : "Let's Go!"}
               </button>
             </form>
 
-            {status.type !== "idle" && (
-              <p className={`mt-4 text-sm ${status.type === "error" ? "text-[#B83A2D]" : "text-[#2F6F3A]"}`}>
-                {status.type === "success" ? "✅ " : status.type === "error" ? "❌ " : ""}
-                {status.message}
-              </p>
-            )}
+            {status.type === "loading" && (
+                <div className="mt-4 flex items-center justify-center gap-3">
+                  <span className="text-sm font-semibold text-[#5A3E2B]">
+                    Pooh & Piglet are on their way to deliver your RSVP!
+                  </span>
+                  <img
+                    src="/pooh-walk.gif"
+                    alt="Pooh walking"
+                    className="h-10 w-auto mix-blend-darken"
+                  />
+                </div>
+              )}
+
+              {status.type === "success" && (
+                <p className="mt-4 text-sm text-[#2F6F3A]">
+                  ✅ {status.message}
+                </p>
+              )}
+
+              {status.type === "error" && (
+                <p className="mt-4 text-sm text-[#B83A2D]">
+                  ❌ {status.message}
+                </p>
+              )}
           </div>
         </section>
 

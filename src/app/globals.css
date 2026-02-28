@@ -1,5 +1,13 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Slight";
+  src: url("/fonts/Slight-Regular.ttf") format("truetype");
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Pooh “honey + paper” theme */
 :root {
   --pooh-cream: #fff8e7;
@@ -16,6 +24,10 @@
 html,
 body {
   height: 100%;
+}
+
+.font-slight {
+  font-family: "Slight", cursive;
 }
 
 /* ✅ Let the global fixed background show through */
@@ -39,14 +51,13 @@ body::before {
   pointer-events: none;
 }
 
-/* ✅ Overlay: make it LIGHT (not grey / dark) */
+/* ✅ Overlay: DESKTOP default */
 body::after {
   content: "";
   position: fixed;
   inset: 0;
 
-  /* was rgba(0,0,0,0.25) → that’s why it looked grey */
-  background: rgba(255, 248, 231, 0.10);
+  background: rgba(255, 248, 231, 0.18);
 
   z-index: -1;
   pointer-events: none;
@@ -74,7 +85,6 @@ html {
 
 /* =========================
    HERO
-   - no longer paints background here (global bg handles it)
    ========================= */
 
 .hero-frame {
@@ -120,9 +130,9 @@ html {
   border-radius: 30px;
   pointer-events: none;
   background:
-    radial-gradient(1200px 500px at 20% 10%, rgba(255,255,255,0.20), transparent 60%),
-    radial-gradient(900px 450px at 80% 30%, rgba(255,255,255,0.10), transparent 55%),
-    radial-gradient(700px 400px at 50% 100%, rgba(246,196,83,0.14), transparent 60%);
+    radial-gradient(1200px 500px at 20% 10%, rgba(255, 255, 255, 0.2), transparent 60%),
+    radial-gradient(900px 450px at 80% 30%, rgba(255, 255, 255, 0.1), transparent 55%),
+    radial-gradient(700px 400px at 50% 100%, rgba(246, 196, 83, 0.14), transparent 60%);
   mix-blend-mode: screen;
   z-index: 2;
 }
@@ -131,7 +141,7 @@ html {
 .hero-tint {
   position: absolute;
   inset: 0;
-  background: rgba(0,0,0,0.12);
+  background: rgba(0, 0, 0, 0.12);
   z-index: 1;
 }
 
@@ -146,12 +156,156 @@ html {
 }
 
 /* =========================
+   HERO DATE (DESKTOP DEFAULT)
+   White text + proper layout + lines
+   ========================= */
+
+.hero-date-block {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 34px;
+  z-index: 20;
+  padding: 0 44px;
+  text-align: center;
+  pointer-events: none;
+
+  /* ✅ white text */
+  color: rgba(255, 255, 255, 0.95);
+  text-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+}
+
+.hero-date-top {
+  margin-bottom: 14px;
+  font-size: 1.05rem;
+  line-height: 1.25;
+  letter-spacing: 0.06em;
+  font-style: italic;
+}
+
+.hero-date-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  column-gap: 18px;
+}
+
+.hero-date-side {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  letter-spacing: 0.22em;
+  font-size: 0.9rem;
+  white-space: nowrap;
+}
+
+.hero-date-left { justify-content: flex-end; }
+.hero-date-right { justify-content: flex-start; }
+
+.hero-date-line {
+  height: 1px;
+  width: 110px; /* ✅ nice desktop line length */
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.hero-date-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 120px;
+  text-align: center;
+}
+
+.hero-date-day {
+  font-size: 4rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.hero-date-year {
+  margin-top: 8px;
+  font-size: 0.95rem;
+  letter-spacing: 0.28em;
+  line-height: 1;
+}
+
+/* =========================
+   ✅ HERO INVITE / DATE (Pinned inside hero image)
+   Put the invite markup INSIDE .hero-window in TSX
+   ========================= */
+
+.hero-invite {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 18px;
+  z-index: 5; /* above hero-media + hero-tint */
+  padding: 0 22px;
+  color: rgba(255, 255, 255, 0.95);
+  text-align: center;
+  pointer-events: none;
+  text-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+}
+
+.hero-invite-top {
+  margin-bottom: 14px;
+}
+
+.hero-invite-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 14px;
+}
+
+.hero-invite-side {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: center;
+}
+
+.hero-invite-line {
+  height: 1px;
+  width: 100%;
+  max-width: 140px;
+  background: rgba(255, 255, 255, 0.7);
+}
+
+.hero-invite-side-text {
+  letter-spacing: 0.28em;
+  font-size: 12px;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.hero-invite-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+
+.hero-invite-day {
+  font-size: 44px;
+  letter-spacing: 0.02em;
+}
+
+.hero-invite-year {
+  margin-top: 8px;
+  font-size: 12px;
+  opacity: 0.95;
+  letter-spacing: 0.28em;
+}
+
+/* =========================
    Scroll fade-in animation
    ========================= */
 .fade-section {
   opacity: 0;
   transform: translateY(24px);
-  transition: opacity 0.9s ease, transform 0.9s ease;
+  transition: opacity 1.4s ease, transform 1.4s ease;
   will-change: opacity, transform;
 }
 
@@ -168,7 +322,7 @@ html {
 }
 
 .hero-panel {
-  padding: 18px;
+  padding: 10px;
 }
 
 .fade-stagger.is-visible > * {
@@ -176,10 +330,18 @@ html {
   transform: translateY(0);
 }
 
-.fade-stagger.is-visible > *:nth-child(1) { transition-delay: 0.08s; }
-.fade-stagger.is-visible > *:nth-child(2) { transition-delay: 0.16s; }
-.fade-stagger.is-visible > *:nth-child(3) { transition-delay: 0.24s; }
-.fade-stagger.is-visible > *:nth-child(4) { transition-delay: 0.32s; }
+.fade-stagger.is-visible > *:nth-child(1) {
+  transition-delay: 0.08s;
+}
+.fade-stagger.is-visible > *:nth-child(2) {
+  transition-delay: 0.16s;
+}
+.fade-stagger.is-visible > *:nth-child(3) {
+  transition-delay: 0.24s;
+}
+.fade-stagger.is-visible > *:nth-child(4) {
+  transition-delay: 0.32s;
+}
 
 /* =========================
    NAV solid bar (desktop)
@@ -190,9 +352,14 @@ html {
 }
 
 /* =========================
-   MOBILE HERO
+   MOBILE ONLY OVERRIDES
    ========================= */
 @media (max-width: 767px) {
+  /* ✅ ONLY MOBILE: make overlay stronger/lighter as you like */
+  body::after {
+    background: rgba(255, 248, 231, 0.55);
+  }
+
   .hero-glass-ring {
     background: none !important;
   }
@@ -230,25 +397,165 @@ html {
     display: flex;
     justify-content: center;
     align-items: flex-start;
-    padding: 0 16px;
-    padding-top: 5svh;
+    padding: 0 18px;
+    /* padding-top: 2svh; */
   }
 
   .hero-panel h1 {
-    font-size: 2.25rem;
+    font-size: 1.85rem;
     line-height: 1.05;
+    top: 0.75rem;
+    left: 2.25rem;
   }
 
-  .hero-panel p {
-    font-size: 0.95rem;
+  .hero-and{
+    inset: 0;
+    top: 0.25rem;
+  }
+
+  .hero-panel h2 {
+    font-size: 1.85rem;
+    line-height: 1.05;
+    bottom: 0.5rem;
+    right: 2.25rem;
   }
 
   .hero-copy > .hero-panel {
-    width: min(92vw, 560px);
-    border-radius: 26px;
-    padding: 20px 22px;
-    background: rgba(255, 248, 231, 0.75);
+    width: min(100vw, 560px);
+    background: linear-gradient(
+      to bottom,
+      rgba(255, 248, 231, 0.6),
+      rgb(255, 248, 231, 0.5),
+      rgba(255, 248, 231, 0.4)
+    );
     border: none !important;
+    position: absolute;
+    height: 12svh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* ✅ MOBILE tuning for invite/date so it fits at the bottom of the image */
+  .hero-date-block {
+    bottom: 16px;
+    padding: 0 18px;
+    color: rgba(98, 74, 68, 0.95);
+    text-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+  }
+
+  /* subtle fade so brown text is readable */
+  .hero-date-block::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -16px;
+    height: 140px;
+    background: linear-gradient(
+      to top,
+      rgba(255, 248, 231, 0.6),
+      rgba(255, 248, 231, 0.5),
+      rgba(255, 248, 231, 0.4)
+    );
+    z-index: -1;
+  }
+
+  .hero-invite {
+    font-size: 0.9rem;
+    line-height: 1.2;
+    letter-spacing: 0.02em;
+    margin-bottom: 10px;
+  }
+
+  .hero-invite-top {
+    font-size: 12px;
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+  }
+
+  .hero-invite-line {
+    max-width: 90px;
+  }
+
+  .hero-invite-day {
+    font-size: 38px;
+  }
+
+  .hero-invite-side-text,
+  .hero-invite-year {
+    font-size: 11px;
+  }
+
+  .hero-date-row {
+    display: grid;
+    grid-template-columns: 1fr 90px 1fr; /* ✅ fixed middle column */
+    align-items: center;
+    column-gap: 12px;
+  }
+
+  .hero-date-side {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    white-space: nowrap;
+  }
+
+  .hero-date-side:first-child{
+    justify-content: flex-end; /* SATURDAY hugs center */
+  }
+
+  .hero-date-side:last-child{
+    justify-content: flex-start; /* JUNE hugs center */
+  }
+
+
+  .hero-date-side .line {
+    height: 1px;
+    width: 42px;
+    background: rgba(98, 74, 68, 0.829);
+  }
+
+  .hero-date-center {
+    width: 90px;            /* ✅ hard lock center width */
+    justify-self: center;   /* ✅ center the whole column */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
+  }
+
+  .hero-date-center .day {
+    font-size: 2.4rem;
+    font-weight: 700;
+  }
+
+  .hero-date-center .year {
+    margin-top: 2px;
+    font-size: 0.9rem;
+    letter-spacing: 0.18em;
+  }
+
+  .hero-date-top {
+    margin-bottom: 10px;
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+  }
+
+  .hero-date-line {
+    height: 1px;
+    width: 42px; /* ✅ shorter lines for mobile */
+    background: rgba(98, 74, 68, 0.829);
+  }
+
+  .hero-date-day {
+    font-size: 2.6rem;
+  }
+
+  .hero-date-year {
+    margin-top: 4px;
+    font-size: 0.85rem;
   }
 }
