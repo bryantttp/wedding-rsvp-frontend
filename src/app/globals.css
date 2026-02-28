@@ -430,7 +430,7 @@ html {
     );
     border: none !important;
     position: absolute;
-    height: 12svh;
+    height: 16svh;
     display: flex;
     align-items: center;
     justify-content: center;
