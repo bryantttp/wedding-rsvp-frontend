@@ -212,14 +212,6 @@ export default function HomePage() {
                   <p>🍷 <strong>Free-flow</strong> wine & beer</p>
                   <p>🍾 <strong>No corkage fee</strong></p>
                 </div>
-
-                <a
-                  href="https://maps.app.goo.gl/1ta7W7Ah5dfdKTHy7"
-                  target="_blank"
-                  className="inline-block mt-6 rounded-xl bg-[#F6C453] px-5 py-3 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
-                >
-                  Open in Google Maps
-                </a>
               </div>
 
               {/* RIGHT: GOOGLE MAP */}

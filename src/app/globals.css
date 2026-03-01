@@ -439,7 +439,8 @@ html {
   /* ✅ MOBILE tuning for invite/date so it fits at the bottom of the image */
   .hero-date-block {
     bottom: 16px;
-    padding: 0 18px;
+    padding-left: calc(18px + env(safe-area-inset-left));
+    padding-right: calc(18px + env(safe-area-inset-right));
     color: rgba(98, 74, 68, 0.95);
     text-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
   }
@@ -489,9 +490,9 @@ html {
 
   .hero-date-row {
     display: grid;
-    grid-template-columns: 1fr 90px 1fr; /* ✅ fixed middle column */
+    grid-template-columns: 1fr 96px 1fr; /* fixed middle column */
     align-items: center;
-    column-gap: 12px;
+    column-gap: 12px;;
   }
 
   .hero-date-side {
@@ -518,13 +519,16 @@ html {
     background: rgba(98, 74, 68, 0.829);
   }
 
-  .hero-date-center {
-    width: 90px;            /* ✅ hard lock center width */
-    justify-self: center;   /* ✅ center the whole column */
+  .hero-date-center { 
+    width: 96px;
+    justify-self: center;
     display: flex;
     flex-direction: column;
     align-items: center;
     text-align: center;
+
+    /* optional: makes “13” feel more stable */
+    font-variant-numeric: tabular-nums;
   }
 
   .hero-date-center .day {
@@ -545,9 +549,10 @@ html {
   }
 
   .hero-date-line {
+    flex: 1;
+    max-width: 52px;
     height: 1px;
-    width: 42px; /* ✅ shorter lines for mobile */
-    background: rgba(98, 74, 68, 0.829);
+    background: rgba(98, 74, 68, 0.85);
   }
 
   .hero-date-day {
