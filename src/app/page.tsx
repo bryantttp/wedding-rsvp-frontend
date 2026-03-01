@@ -22,6 +22,15 @@ export default function HomePage() {
   const [status, setStatus] = useState<Status>({ type: "idle", message: "" });
   const year = useMemo(() => new Date().getFullYear(), []);
 
+  const MIN_GUESTS = 0;
+  const MAX_GUESTS = 10;
+
+  const decGuests = () =>
+    setAdditionalCount((prev) => Math.max(MIN_GUESTS, prev - 1));
+
+  const incGuests = () =>
+    setAdditionalCount((prev) => Math.min(MAX_GUESTS, prev + 1));
+
   const heroStyle: CSSProperties & {
     "--hero-bg-url"?: string;
     "--hero-photo-url"?: string;
@@ -164,17 +173,17 @@ export default function HomePage() {
           <div className="hero-copy">
             <div className="hero-panel hero-names">
               <div>
-                <h1 className="absolute hero-name-left font-fraunces tracking-[0.10em] leading-tight text-[#624a44] sm:text-4xl md:text-6xl">
+                <h1 className="absolute hero-name-left font-fraunces tracking-[0.10em] leading-tight text-[#624a44] md:text-white sm:text-4xl md:text-6xl">
                   BRYANT
                 </h1>
 
                 <div className="absolute hero-and flex items-center justify-center gap-4">
-                  <div className="h-[1px] w-16 bg-[#7b8b84] hero-and-line" />
-                  <p className="font-slight italic text-3xl text-[#624a44] sm:text-3xl md:text-4xl hero-and-text">and</p>
-                  <div className="h-[1px] w-16 bg-[#7b8b84] hero-and-line" />
+                  <div className="h-[1px] w-16 bg-[#7b8b84] md:bg-white hero-and-line" />
+                  <p className="font-slight italic text-3xl text-[#624a44] md:text-white sm:text-3xl md:text-4xl hero-and-text">and</p>
+                  <div className="h-[1px] w-16 bg-[#7b8b84] md:bg-white hero-and-line" />
                 </div>
 
-                <h2 className="absolute font-fraunces tracking-[0.10em] leading-tight text-[#624a44] sm:text-4xl md:text-6xl hero-name hero-name-right">
+                <h2 className="absolute font-fraunces tracking-[0.10em] leading-tight text-[#624a44] md:text-white sm:text-4xl md:text-6xl hero-name hero-name-right">
                   CINDY
                 </h2>
               </div>
@@ -263,34 +272,33 @@ export default function HomePage() {
                   Additional guests (excluding yourself)
                 </div>
 
-                <input
-                  type="number"
-                  inputMode="numeric"
-                  min={0}
-                  max={10}
-                  step={1}
-                  value={additionalCount}
-                  onChange={(e) => {
-                    // allow clearing while typing, then clamp on blur
-                    const raw = e.target.value;
-                    if (raw === "") {
-                      setAdditionalCount(0);
-                      return;
-                    }
+                <div className="flex items-center justify-between rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3">
 
-                    const n = Number(raw);
-                    if (Number.isNaN(n)) return;
+                  {/* Decrease */}
+                  <button
+                    type="button"
+                    onClick={() => setAdditionalCount((prev) => Math.max(0, prev - 1))}
+                    disabled={additionalCount <= 0}
+                    className="guest-button flex h-10 w-10 items-center justify-center rounded-lg border border-[#F6C453]/40 bg-[#FFF8E7] text-lg font-semibold text-[#5A3E2B] hover:bg-[#FDF1CF] disabled:opacity-40"
+                  >
+                    −
+                  </button>
 
-                    // clamp between 0 and 10
-                    const clamped = Math.min(10, Math.max(0, Math.trunc(n)));
-                    setAdditionalCount(clamped);
-                  }}
-                  onBlur={() => {
-                    // final safety clamp
-                    setAdditionalCount((prev) => Math.min(10, Math.max(0, Math.trunc(prev))));
-                  }}
-                  className="w-full rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
-                />
+                  {/* Current value */}
+                  <div className="text-2xl font-semibold text-[#5A3E2B] min-w-[40px] text-center">
+                    {additionalCount}
+                  </div>
+
+                  {/* Increase */}
+                  <button
+                    type="button"
+                    onClick={() => setAdditionalCount((prev) => Math.min(10, prev + 1))}
+                    disabled={additionalCount >= 10}
+                    className="guest-button flex h-10 w-10 items-center justify-center rounded-lg border border-[#F6C453]/40 bg-[#FFF8E7] text-lg font-semibold text-[#5A3E2B] hover:bg-[#FDF1CF] disabled:opacity-40"
+                  >
+                    +
+                  </button>
+                </div>
               </div>
 
               <button
