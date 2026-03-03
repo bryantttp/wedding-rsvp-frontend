@@ -13,7 +13,7 @@ type Rsvp = {
   id: string;
   name: string;
   email: string;
-  additionalCount?: number; // ✅ NEW
+  totalGuests?: number;
   createdAt?: FirestoreTimestamp;
 };
 
@@ -49,7 +49,7 @@ export default function AdminPage() {
   const [unlocked, setUnlocked] = useState(false);
   const [password, setPassword] = useState("");
 
-  // ✅ selection state (RSVP doc IDs)
+  // selection state (RSVP doc IDs)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
   async function load() {
@@ -72,7 +72,7 @@ export default function AdminPage() {
       if (!Array.isArray(json)) throw new Error("Unexpected response format (expected an array).");
 
       setData(json as Rsvp[]);
-      setSelectedIds(new Set()); // clear selection on reload
+      setSelectedIds(new Set());
     } catch (e: unknown) {
       setError(e instanceof Error ? e.message : "Failed to load RSVPs");
     } finally {
@@ -86,7 +86,6 @@ export default function AdminPage() {
   }, [unlocked]);
 
   const rows = useMemo(() => {
-    // sort by createdAt asc
     return [...data].sort((a, b) => {
       const am = toMillis(a.createdAt) ?? 0;
       const bm = toMillis(b.createdAt) ?? 0;
@@ -97,11 +96,10 @@ export default function AdminPage() {
   const totalSubmissions = data.length;
 
   const totalGuests = useMemo(() => {
-    // total people = 1 main + additionalCount (clamped)
-    let sum = 0;
+    let sum = 1;
     for (const r of data) {
-      const add = Number.isFinite(r.additionalCount) ? Number(r.additionalCount) : 0;
-      sum += 1 + Math.max(0, Math.min(10, add));
+      const totalGuests = Number.isFinite(r.totalGuests) ? Number(r.totalGuests) : 1;
+      sum = Math.max(sum, Math.min(10, totalGuests));
     }
     return sum;
   }, [data]);
@@ -208,7 +206,6 @@ export default function AdminPage() {
 
       const failedSet = new Set(failed);
 
-      // keep failed in UI, remove successes
       setData((prev) => prev.filter((r) => failedSet.has(r.id)));
       setSelectedIds(new Set(failed));
 
@@ -223,22 +220,14 @@ export default function AdminPage() {
   }
 
   function exportCsv() {
-    // ✅ one row per RSVP doc
-    const header = ["Name", "Email", "Created", "Additional Count", "Total Guests"].join(",");
+    const header = ["Name", "Email", "Created", "Total Guests"].join(",");
 
     const lines = rows.map((r) => {
       const created = formatDate(r.createdAt) || "";
-      const addRaw = Number.isFinite(r.additionalCount) ? Number(r.additionalCount) : 0;
-      const add = Math.max(0, Math.min(10, addRaw));
-      const total = 1 + add;
+      const total = r.totalGuests ? Math.max(1, Math.min(10, r.totalGuests)) : 1;
 
-      return [
-        r.name ?? "",
-        r.email ?? "",
-        created,
-        String(add),
-        String(total),
-      ]
+
+      return [r.name ?? "", r.email ?? "", created, String(total)]
         .map(csvEscape)
         .join(",");
     });
@@ -256,175 +245,145 @@ export default function AdminPage() {
     URL.revokeObjectURL(url);
   }
 
+  const PrimaryBtn =
+    "rounded-xl bg-[#F6C453] px-4 py-2.5 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543] disabled:opacity-60 disabled:cursor-not-allowed";
+  const SoftBtn =
+    "rounded-xl border border-[#F6C453]/50 bg-white/70 px-4 py-2.5 text-sm font-semibold text-[#5A3E2B] hover:bg-white disabled:opacity-60 disabled:cursor-not-allowed";
+  const DangerBtn =
+    "rounded-xl border border-[#d33] bg-white px-4 py-2.5 text-sm font-semibold text-[#d33] hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed";
+
   // LOCK
   if (!unlocked) {
     return (
-      <main style={{ maxWidth: 420, margin: "48px auto", padding: 16, fontFamily: "Arial, sans-serif" }}>
-        <h1 style={{ fontSize: 28, margin: 0 }}>Admin</h1>
-        <p style={{ marginTop: 8, opacity: 0.75 }}>Enter password to view RSVPs.</p>
+      <main className="mx-auto max-w-xl px-5 py-14">
+        <div className="rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7]/95 p-6 pooh-shadow md:p-10">
+          <h1 className="font-fraunces text-3xl text-[#5A3E2B]">Admin</h1>
+          <p className="mt-2 text-sm text-[#5A3E2B]/75">Enter password to view RSVPs.</p>
 
-        <form onSubmit={onUnlock} style={{ marginTop: 16 }}>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            style={{
-              width: "100%",
-              padding: "12px 12px",
-              borderRadius: 10,
-              border: "1px solid #ddd",
-              outline: "none",
-            }}
-          />
+          <form onSubmit={onUnlock} className="mt-6 grid gap-3">
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3 text-[#5A3E2B] placeholder:text-[#B08968] focus:outline-none focus:ring-2 focus:ring-[#F6C453]"
+            />
 
-          <button type="submit" style={{ marginTop: 12, width: "100%", padding: "12px 14px", cursor: "pointer" }}>
-            Unlock
-          </button>
+            <button type="submit" className={PrimaryBtn}>
+              Unlock
+            </button>
 
-          {error && <p style={{ color: "crimson", marginTop: 12 }}>Error: {error}</p>}
-        </form>
+            {error && <p className="mt-2 text-sm text-[#B83A2D]">❌ {error}</p>}
+          </form>
+        </div>
       </main>
     );
   }
 
-  const th = { textAlign: "left" as const, padding: 10, borderBottom: "1px solid #ddd" };
-  const td = { padding: 10, borderBottom: "1px solid #eee", verticalAlign: "top" as const };
-
   // UNLOCKED
   return (
-    <main style={{ maxWidth: 1200, margin: "48px auto", padding: 16, fontFamily: "Arial, sans-serif" }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "flex-start",
-          gap: 12,
-          flexWrap: "wrap",
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: 28, margin: 0 }}>Admin — RSVPs</h1>
-          <p style={{ marginTop: 6, opacity: 0.75 }}>
-            Total submissions: <strong>{totalSubmissions}</strong> · Estimated total guests:{" "}
-            <strong>{totalGuests}</strong>
-          </p>
-        </div>
-
-        <div style={{ display: "flex", gap: 10, alignItems: "center", flexWrap: "wrap" }}>
-          <button
-            onClick={exportCsv}
-            disabled={loading || rows.length === 0}
-            style={{ padding: "10px 14px", cursor: loading || rows.length === 0 ? "not-allowed" : "pointer" }}
-          >
-            Export CSV
-          </button>
-
-          <button
-            onClick={load}
-            disabled={loading}
-            style={{ padding: "10px 14px", cursor: loading ? "not-allowed" : "pointer" }}
-          >
-            {loading ? "Refreshing..." : "Refresh"}
-          </button>
-
-          <button
-            onClick={deleteSelected}
-            disabled={loading || selectedCount === 0}
-            style={{
-              padding: "10px 14px",
-              cursor: loading || selectedCount === 0 ? "not-allowed" : "pointer",
-              border: "1px solid #d33",
-              background: "white",
-              color: "#d33",
-              borderRadius: 10,
-            }}
-          >
-            Delete Selected ({selectedCount})
-          </button>
-        </div>
-      </header>
-
-      {loading && <p>Loading…</p>}
-      {error && <p style={{ color: "crimson" }}>Error: {error}</p>}
-      {!loading && !error && data.length === 0 && <p>No RSVPs yet.</p>}
-
-      {!loading && !error && data.length > 0 && (
-        <section style={{ marginTop: 18 }}>
-          <h2 style={{ fontSize: 18, marginBottom: 10 }}>RSVP list</h2>
-
-          <div style={{ overflowX: "auto", border: "1px solid #ddd", borderRadius: 10 }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
-              <thead>
-                <tr style={{ background: "#f6f6f6" }}>
-                  <th style={th}>
-                    <input
-                      type="checkbox"
-                      checked={allSelected}
-                      onChange={toggleSelectAll}
-                      aria-label="Select all RSVPs"
-                    />
-                  </th>
-                  <th style={th}>Name</th>
-                  <th style={th}>Email</th>
-                  <th style={th}>Created</th>
-                  <th style={th}>Additional Count</th>
-                  <th style={th}>Total Guests</th>
-                  <th style={th}>Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {rows.map((r) => {
-                  const checked = selectedIds.has(r.id);
-                  const addRaw = Number.isFinite(r.additionalCount) ? Number(r.additionalCount) : 0;
-                  const add = Math.max(0, Math.min(10, addRaw));
-                  const total = 1 + add;
-
-                  return (
-                    <tr key={r.id}>
-                      <td style={td}>
-                        <input
-                          type="checkbox"
-                          checked={checked}
-                          onChange={() => toggleSelect(r.id)}
-                          aria-label={`Select ${r.name}`}
-                        />
-                      </td>
-                      <td style={td}>{r.name || "-"}</td>
-                      <td style={td}>{r.email || "-"}</td>
-                      <td style={td}>{formatDate(r.createdAt) || "-"}</td>
-                      <td style={td}>{add}</td>
-                      <td style={td}>{total}</td>
-                      <td style={td}>
-                        <button
-                          type="button"
-                          onClick={() => deleteRsvpById(r.id)}
-                          disabled={loading}
-                          style={{
-                            padding: "6px 10px",
-                            borderRadius: 8,
-                            border: "1px solid #d33",
-                            background: "white",
-                            color: "#d33",
-                            cursor: loading ? "not-allowed" : "pointer",
-                          }}
-                        >
-                          Delete
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+    <main className="mx-auto max-w-6xl px-5 py-12">
+      {/* Outer panel so content doesn't blend into background */}
+      <div className="rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7]/95 p-6 pooh-shadow md:p-10">
+        <header className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+          <div>
+            <h1 className="font-fraunces text-3xl text-[#5A3E2B]">Admin — RSVPs</h1>
+            <p className="mt-2 text-sm text-[#5A3E2B]/75">
+              Total submissions: <span className="font-semibold">{totalSubmissions}</span> · Estimated total guests:{" "}
+              <span className="font-semibold">{totalGuests}</span>
+            </p>
           </div>
 
-          <p style={{ marginTop: 10, opacity: 0.7, fontSize: 12 }}>
-            Deleting is a hard delete. “Additional Count” is clamped to 0–10.
-          </p>
-        </section>
-      )}
+          <div className="flex flex-wrap items-center gap-2">
+            <button onClick={exportCsv} disabled={loading || rows.length === 0} className={SoftBtn}>
+              Export CSV
+            </button>
+
+            <button onClick={load} disabled={loading} className={SoftBtn}>
+              {loading ? "Refreshing..." : "Refresh"}
+            </button>
+
+            <button onClick={deleteSelected} disabled={loading || selectedCount === 0} className={DangerBtn}>
+              Delete Selected ({selectedCount})
+            </button>
+          </div>
+        </header>
+
+        {loading && <p className="mt-6 text-sm text-[#5A3E2B]/80">Loading…</p>}
+        {error && <p className="mt-6 text-sm text-[#B83A2D]">❌ {error}</p>}
+        {!loading && !error && data.length === 0 && <p className="mt-6 text-sm text-[#5A3E2B]/80">No RSVPs yet.</p>}
+
+        {!loading && !error && data.length > 0 && (
+          <section className="mt-8">
+            <div className="mb-3 flex items-end justify-between gap-3">
+              <h2 className="font-fraunces text-xl text-[#5A3E2B]">RSVP list</h2>
+              <p className="text-xs text-[#5A3E2B]/70">Deleting is a hard delete. Additional Count is clamped 0–10.</p>
+            </div>
+
+            {/* Table card */}
+            <div className="overflow-hidden rounded-2xl border border-[#F6C453]/35 bg-white/75 pooh-shadow">
+              <div className="overflow-x-auto">
+                <table className="min-w-[920px] w-full border-collapse text-left text-sm text-[#5A3E2B]">
+                  <thead className="sticky top-0 z-10 bg-[#FFF3D6]">
+                    <tr className="border-b border-[#F6C453]/30">
+                      <th className="w-12 px-4 py-3">
+                        <input
+                          type="checkbox"
+                          checked={allSelected}
+                          onChange={toggleSelectAll}
+                          aria-label="Select all RSVPs"
+                          className="h-4 w-4 accent-[#F6C453]"
+                        />
+                      </th>
+                      <th className="px-4 py-3 font-semibold">Name</th>
+                      <th className="px-4 py-3 font-semibold">Email</th>
+                      <th className="px-4 py-3 font-semibold">Created</th>
+                      <th className="px-4 py-3 font-semibold">Additional</th>
+                      <th className="px-4 py-3 font-semibold">Total</th>
+                      <th className="px-4 py-3 font-semibold">Actions</th>
+                    </tr>
+                  </thead>
+
+                  <tbody>
+                    {rows.map((r) => {
+                      const checked = selectedIds.has(r.id);
+                      const total = r.totalGuests ? Math.max(1, Math.min(10, r.totalGuests)) : 1;
+
+                      return (
+                        <tr key={r.id} className="border-b border-[#F6C453]/15 hover:bg-[#FFF8E7]/60">
+                          <td className="px-4 py-3 align-top">
+                            <input
+                              type="checkbox"
+                              checked={checked}
+                              onChange={() => toggleSelect(r.id)}
+                              aria-label={`Select ${r.name}`}
+                              className="h-4 w-4 accent-[#F6C453]"
+                            />
+                          </td>
+                          <td className="px-4 py-3 align-top">{r.name || "-"}</td>
+                          <td className="px-4 py-3 align-top">{r.email || "-"}</td>
+                          <td className="px-4 py-3 align-top">{formatDate(r.createdAt) || "-"}</td>
+                          <td className="px-4 py-3 align-top">{total}</td>
+                          <td className="px-4 py-3 align-top">
+                            <button
+                              type="button"
+                              onClick={() => deleteRsvpById(r.id)}
+                              disabled={loading}
+                              className="rounded-lg border border-[#d33] bg-white px-3 py-1.5 text-xs font-semibold text-[#d33] hover:bg-red-50 disabled:opacity-60 disabled:cursor-not-allowed"
+                            >
+                              Delete
+                            </button>
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </section>
+        )}
+      </div>
     </main>
   );
 }

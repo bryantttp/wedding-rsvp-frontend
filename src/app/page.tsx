@@ -16,20 +16,19 @@ export default function HomePage() {
   const [email, setEmail] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // ✅ NEW: just a count (0 = no additional attendees)
-  const [additionalCount, setAdditionalCount] = useState<number>(0);
+  const [totalGuests, setTotalGuests] = useState<number>(1);
 
   const [status, setStatus] = useState<Status>({ type: "idle", message: "" });
   const year = useMemo(() => new Date().getFullYear(), []);
 
-  const MIN_GUESTS = 0;
+  const MIN_GUESTS = 1;
   const MAX_GUESTS = 10;
 
   const decGuests = () =>
-    setAdditionalCount((prev) => Math.max(MIN_GUESTS, prev - 1));
+    setTotalGuests((prev) => Math.max(MIN_GUESTS, prev - 1));
 
   const incGuests = () =>
-    setAdditionalCount((prev) => Math.min(MAX_GUESTS, prev + 1));
+    setTotalGuests((prev) => Math.min(MAX_GUESTS, prev + 1));
 
   const heroStyle: CSSProperties & {
     "--hero-bg-url"?: string;
@@ -78,7 +77,7 @@ export default function HomePage() {
       const payload = {
         name: name.trim(),
         email: email.trim(),
-        additionalCount: Number(additionalCount) || 0,
+        totalGuests: Number(totalGuests) || 1,
       };
 
       const res = await fetch(`${API_BASE}/save-rsvp`, {
@@ -98,7 +97,7 @@ export default function HomePage() {
 
       setName("");
       setEmail("");
-      setAdditionalCount(0);
+      setTotalGuests(1);
     } catch {
       setStatus({ type: "error", message: "Network error. Is your backend running?" });
     } finally {
@@ -197,31 +196,51 @@ export default function HomePage() {
         <section id="venue" className="fade-section py-20 md:py-28">
 
           {/* ✅ SAME SHADE PANEL AS RSVP */}
-          <div className="rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7]/95 p-6 pooh-shadow md:p-10">
-
-            <h2 className="font-fraunces text-3xl text-[#5A3E2B] md:text-4xl">
-              Venue
-            </h2>
+          <div>
 
             <div className="mt-8 grid gap-8 md:grid-cols-2">
 
               {/* LEFT: DETAILS */}
-              <div className="rounded-2xl border border-[#F6C453]/35 bg-white/70 p-6 pooh-shadow">
-                <h3 className="font-fraunces text-xl font-semibold text-[#5A3E2B]">
-                  Orchard Hotel Singapore
-                </h3>
+             <div className="hero-border-details rounded-2xl border border-[#F6C453]/35 bg-white/75 p-6 pooh-shadow">
+              {/* List */}
+              <ul className="mt-2 space-y-4 text-[#5A3E2B]/80">
+                <li className="flex items-start gap-4">
+                  <span className="w-6 text-xl leading-none">🥂</span>
+                  <p className="font-fraunces text-xl leading-snug">
+                    <strong className="text-[#5A3E2B]">Reception</strong> begins at 6:30pm
+                  </p>
+                </li>
 
-                <p className="font-fraunces mt-3 text-[#5A3E2B]/80">
-                  442 Orchard Road, Singapore 238879
-                </p>
+                <li className="flex items-start gap-4">
+                  <span className="w-6 text-xl leading-none">🍽️</span>
+                  <p className="font-fraunces text-xl leading-snug">
+                    <strong className="text-[#5A3E2B]">Banquet</strong> starts at 7pm
+                  </p>
+                </li>
 
-                <div className="font-fraunces mt-5 space-y-2 text-[#5A3E2B]/80">
-                  <p>🥂 <strong>Reception</strong> begins at 6:30pm</p>
-                  <p>🍽️ <strong>Banquet</strong> starts at 7pm</p>
-                  <p>🍷 <strong>Free-flow</strong> wine & beer</p>
-                  <p>🍾 <strong>No corkage fee</strong></p>
-                </div>
-              </div>
+                <li className="flex items-start gap-4">
+                  <span className="w-6 text-xl leading-none">🍷</span>
+                  <p className="font-fraunces text-xl leading-snug">
+                    <strong className="text-[#5A3E2B]">Free-flow</strong> wine &amp; beer
+                  </p>
+                </li>
+
+                <li className="flex items-start gap-4">
+                  <span className="w-6 text-xl leading-none">🍾</span>
+                  <p className="font-fraunces text-xl leading-snug">
+                    <strong className="text-[#5A3E2B]">No corkage fee</strong>
+                  </p>
+                </li>
+              </ul>
+
+              {/* Divider */}
+              <div className="my-5 h-px w-full bg-[#F6C453]/25" />
+
+              {/* Venue */}
+              <h3 className="font-fraunces text-2xl font-semibold text-[#5A3E2B]">
+                Orchard Hotel Singapore
+              </h3>
+            </div>
 
               {/* RIGHT: GOOGLE MAP */}
               <div className="overflow-hidden rounded-2xl border border-[#F6C453]/35 pooh-shadow">
@@ -240,10 +259,10 @@ export default function HomePage() {
 
         {/* RSVP */}
         <section id="rsvp" className="fade-section pb-24 pt-10 md:pb-32">
-          <div className="fade-stagger rounded-3xl border border-[#F6C453]/40 bg-[#FFF8E7] p-6 text-[#5A3E2B] pooh-shadow md:p-10">
+          <div className="hero-border-rsvp fade-stagger rounded-3xl border border-[#F6C453]/35 bg-white/75 p-6 text-[#5A3E2B] pooh-shadow md:p-10">
             <h2 className="font-fraunces text-3xl md:text-4xl">Kindly Let Us Know</h2>
             <p className="mt-3 max-w-2xl text-[#5A3E2B]/80">
-              Please RSVP below (name, email, and number of additional guests).
+              Please RSVP below (name, email, and total number of guests).
             </p>
 
             <form onSubmit={onSubmit} className="mt-8 grid gap-4">
@@ -269,7 +288,7 @@ export default function HomePage() {
               {/* ✅ Additional guest count */}
               <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-4 pooh-shadow">
                 <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">
-                  Additional guests (excluding yourself)
+                  Total Guests
                 </div>
 
                 <div className="flex items-center justify-between rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3">
@@ -277,8 +296,8 @@ export default function HomePage() {
                   {/* Decrease */}
                   <button
                     type="button"
-                    onClick={() => setAdditionalCount((prev) => Math.max(0, prev - 1))}
-                    disabled={additionalCount <= 0}
+                    onClick={() => setTotalGuests((prev) => Math.max(1, prev - 1))}
+                    disabled={totalGuests <= 1}
                     className="guest-button flex h-10 w-10 items-center justify-center rounded-lg border border-[#F6C453]/40 bg-[#FFF8E7] text-lg font-semibold text-[#5A3E2B] hover:bg-[#FDF1CF] disabled:opacity-40"
                   >
                     −
@@ -286,14 +305,14 @@ export default function HomePage() {
 
                   {/* Current value */}
                   <div className="text-2xl font-semibold text-[#5A3E2B] min-w-[40px] text-center">
-                    {additionalCount}
+                    {totalGuests}
                   </div>
 
                   {/* Increase */}
                   <button
                     type="button"
-                    onClick={() => setAdditionalCount((prev) => Math.min(10, prev + 1))}
-                    disabled={additionalCount >= 10}
+                    onClick={() => setTotalGuests((prev) => Math.min(10, prev + 1))}
+                    disabled={totalGuests >= 10}
                     className="guest-button flex h-10 w-10 items-center justify-center rounded-lg border border-[#F6C453]/40 bg-[#FFF8E7] text-lg font-semibold text-[#5A3E2B] hover:bg-[#FDF1CF] disabled:opacity-40"
                   >
                     +

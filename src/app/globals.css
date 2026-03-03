@@ -221,6 +221,7 @@ html {
   font-size: 4rem;
   font-weight: 700;
   line-height: 1;
+  padding-right: 1vw;
 }
 
 .hero-date-year {
@@ -585,5 +586,9 @@ html {
   .guest-button {
     height: 20%;
     width: 20%;
+  }
+
+  .hero-border-rsvp,.hero-border-details {
+    background: rgba(255, 255, 255, 0.3)
   }
 }
