@@ -288,7 +288,7 @@ export default function HomePage() {
               {/* ✅ Additional guest count */}
               <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-4 pooh-shadow">
                 <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">
-                  Total Guests
+                  Total Guests (Including yourself)
                 </div>
 
                 <div className="flex items-center justify-between rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3">
