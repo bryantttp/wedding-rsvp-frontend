@@ -326,9 +326,9 @@ export default function AdminPage() {
           ...(ADMIN_PASS ? { "x-admin-pass": ADMIN_PASS } : {}),
         },
         body: JSON.stringify({
-          subject: emailSubject.trim(),
-          bcc: bccList,
-          html: emailHtml,
+          subjectTemplate: emailSubject.trim(),
+          extraBcc: bccList,
+          htmlTemplate: emailHtml,
           recipients,
         }),
       });
