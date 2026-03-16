@@ -204,42 +204,34 @@ export default function HomePage() {
              <div className="hero-border-details rounded-2xl border border-[#F6C453]/35 bg-white/75 p-6 pooh-shadow">
               {/* List */}
               <ul className="mt-2 space-y-4 text-[#5A3E2B]/80">
-                <li className="flex items-start gap-4">
+                <li className="flex flex-col items-center text-center gap-2">
                   <span className="w-6 text-xl leading-none">🥂</span>
-                  <p className="font-fraunces text-xl leading-snug">
-                    <strong className="text-[#5A3E2B]">Reception</strong> begins at 6:30pm
+                  <p className="font-pagella font-bold italic text-xl leading-snug tracking-[0.1em]">
+                    Reception begins at 6:30pm
                   </p>
                 </li>
 
-                <li className="flex items-start gap-4">
-                  <span className="w-6 text-xl leading-none">🍽️</span>
-                  <p className="font-fraunces text-xl leading-snug">
-                    <strong className="text-[#5A3E2B]">Banquet</strong> starts at 7pm
-                  </p>
-                </li>
-
-                <li className="flex items-start gap-4">
+                <li className="flex flex-col items-center text-center gap-2">
                   <span className="w-6 text-xl leading-none">🍷</span>
-                  <p className="font-fraunces text-xl leading-snug">
-                    <strong className="text-[#5A3E2B]">Free-flow</strong> wine &amp; beer
+                  <p className="font-pagella font-bold italic text-xl leading-snug tracking-[0.1em]">
+                    Free-flow wine &amp; beer
                   </p>
                 </li>
 
-                <li className="flex items-start gap-4">
+                <li className="flex flex-col items-center text-center gap-2">
                   <span className="w-6 text-xl leading-none">🍾</span>
-                  <p className="font-fraunces text-xl leading-snug">
-                    <strong className="text-[#5A3E2B]">No corkage fee</strong>
+                  <p className="font-pagella font-bold italic text-xl leading-snug tracking-[0.1em]">
+                    No corkage fee
                   </p>
                 </li>
-              </ul>
 
-              {/* Divider */}
-              <div className="my-5 h-px w-full bg-[#F6C453]/25" />
-
-              {/* Venue */}
-              <h3 className="font-fraunces text-2xl font-semibold text-[#5A3E2B]">
-                Orchard Hotel Singapore
-              </h3>
+                <li className="flex flex-col items-center text-center gap-2">
+                  <span className="w-6 text-xl leading-none">🍽️</span>
+                  <p className="font-pagella font-bold italic text-xl leading-snug tracking-[0.1em]">
+                    Orchard Hotel Singapore
+                  </p>
+                </li>
+              </ul>            
             </div>
 
               {/* RIGHT: GOOGLE MAP */}
@@ -260,7 +252,7 @@ export default function HomePage() {
         {/* RSVP */}
         <section id="rsvp" className="fade-section pb-24 pt-10 md:pb-32">
           <div className="hero-border-rsvp fade-stagger rounded-3xl border border-[#F6C453]/35 bg-white/75 p-6 text-[#5A3E2B] pooh-shadow md:p-10">
-            <h2 className="font-fraunces text-3xl md:text-4xl">Kindly Let Us Know</h2>
+            <h2 className="font-fraunces text-3xl md:text-4xl">Kindly RSVP by <strong className="font-pagella italic">30 April 2026</strong></h2>
             <p className="mt-3 max-w-2xl text-[#5A3E2B]/80">
               Please RSVP below (name, email, and total number of guests).
             </p>
@@ -289,6 +281,11 @@ export default function HomePage() {
               <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-4 pooh-shadow">
                 <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">
                   Total Guests (Including yourself)
+                </div>
+                <div>
+                  <p className="mt-2 mb-4 text-sm text-[#5A3E2B]/60 italic">
+                    We will do our best to accommodate your requested number of guests.
+                  </p>
                 </div>
 
                 <div className="flex items-center justify-between rounded-xl border border-[#F6C453]/60 bg-white px-4 py-3">
