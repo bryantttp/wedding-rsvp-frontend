@@ -108,26 +108,30 @@ export default function HomePage() {
   return (
     <div className="min-h-screen pooh-paper">
       {/* Top Nav (desktop only) */}
-      <header className="hidden md:block fixed inset-x-0 top-0 z-50">
+      <header className="fixed inset-x-0 top-0 z-50">
         <div className="mx-auto max-w-6xl px-5">
-          <nav className="mt-4 flex items-center justify-between rounded-full border border-[#F6C453]/40 bg-white/40 px-5 py-3 backdrop-blur pooh-shadow">
-            <div className="text-xs tracking-[0.28em] uppercase text-[#5A3E2B]/80">#pang定ang</div>
 
-            <div className="hidden gap-6 text-sm text-[#5A3E2B]/80 md:flex">
-              <a className="hover:text-[#5A3E2B]" href="#home">
-                Home
-              </a>
-              <a className="hover:text-[#5A3E2B]" href="#venue">
-                Details
-              </a>
+          <nav className="mt-4 flex items-center justify-between px-5 py-3 md:rounded-full md:border md:border-[#F6C453]/40 md:bg-white/40 md:backdrop-blur md:pooh-shadow">
+
+            {/* 🟡 Hashtag */}
+            <div className="w-full text-center text-sm md:text-xs tracking-[0.28em] uppercase text-[#5A3E2B]/80 md:w-auto md:text-left translate-y-8 md:translate-y-0">
+              #pang定ang
             </div>
 
+            {/* 🔵 Desktop nav links */}
+            <div className="hidden md:flex gap-6 text-sm text-[#5A3E2B]/80">
+              <a className="hover:text-[#5A3E2B]" href="#home">Home</a>
+              <a className="hover:text-[#5A3E2B]" href="#venue">Details</a>
+            </div>
+
+            {/* 🟢 Desktop RSVP button */}
             <a
               href="#rsvp"
-              className="rounded-full bg-[#F6C453] px-4 py-2 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
+              className="hidden md:flex rounded-full bg-[#F6C453] px-4 py-2 text-sm font-semibold text-[#5A3E2B] hover:bg-[#EAB543]"
             >
               RSVP
             </a>
+
           </nav>
         </div>
       </header>
