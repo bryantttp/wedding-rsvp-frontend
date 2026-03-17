@@ -56,6 +56,26 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []); 
 
+  const [showMobileHashtag, setShowMobileHashtag] = useState(true);
+
+  useEffect(() => {
+    const hero = document.getElementById("home");
+    if (!hero) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowMobileHashtag(entry.isIntersecting);
+      },
+      {
+        rootMargin: "-80% 0px 0px 0px", // 👈 MAGIC LINE
+      }
+    );
+
+    observer.observe(hero);
+
+    return () => observer.disconnect();
+  }, []);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (isSubmitting) return;
@@ -114,7 +134,12 @@ export default function HomePage() {
           <nav className="mt-4 flex items-center justify-between px-5 py-3 md:rounded-full md:border md:border-[#F6C453]/40 md:bg-white/40 md:backdrop-blur md:pooh-shadow">
 
             {/* 🟡 Hashtag */}
-            <div className="w-full text-center text-sm md:text-xs tracking-[0.28em] uppercase text-[#5A3E2B]/80 md:w-auto md:text-left translate-y-8 md:translate-y-0">
+            <div className={`
+                  w-full text-center text-xs tracking-[0.28em] uppercase text-[#5A3E2B]/80
+                  translate-y-6 transition-opacity duration-500
+                  md:translate-y-0 md:w-auto md:text-left md:font-normal md:opacity-100
+                  ${showMobileHashtag ? "opacity-100" : "opacity-0 pointer-events-none md:pointer-events-auto"}
+                `}>
               #pang定ang
             </div>
 
