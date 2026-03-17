@@ -226,7 +226,7 @@ export default function HomePage() {
                 </li>
 
                 <li className="flex flex-col items-center text-center gap-2">
-                  <span className="w-6 text-xl leading-none">🍽️</span>
+                  <span className="w-6 text-xl leading-none">🏨</span>
                   <p className="font-pagella font-bold italic text-xl leading-snug tracking-[0.1em]">
                     Orchard Hotel Singapore
                   </p>
@@ -252,7 +252,7 @@ export default function HomePage() {
         {/* RSVP */}
         <section id="rsvp" className="fade-section pb-24 pt-10 md:pb-32">
           <div className="hero-border-rsvp fade-stagger rounded-3xl border border-[#F6C453]/35 bg-white/75 p-6 text-[#5A3E2B] pooh-shadow md:p-10">
-            <h2 className="font-fraunces text-[1.35rem] md:text-4xl">Kindly RSVP by <strong className="font-pagella italic">30 April 2026</strong></h2>
+            <h2 className="font-pagella text-[1.25rem] md:text-4xl">Kindly RSVP by <strong className="font-pagella italic">30 April 2026</strong> ❤️</h2>
             <form onSubmit={onSubmit} className="mt-8 grid gap-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <input
@@ -275,12 +275,12 @@ export default function HomePage() {
 
               {/* ✅ Additional guest count */}
               <div className="rounded-2xl border border-[#F6C453]/35 bg-white/60 p-4 pooh-shadow">
-                <div className="mb-3 text-sm tracking-wide text-[#5A3E2B]/70">
+                <div className="mb-3 text-base md:text-2xl tracking-wide text-[#5A3E2B]/70">
                   Total Guests (Including yourself)
                 </div>
                 <div>
-                  <p className="mt-2 mb-4 text-sm text-[#5A3E2B]/60 italic">
-                    We will do our best to accommodate your requested number of guests.
+                  <p className="mt-2 mb-4 text-xs text-[#5A3E2B]/60 italic">
+                    We will do our best to accommodate your requested number of guests
                   </p>
                 </div>
 
