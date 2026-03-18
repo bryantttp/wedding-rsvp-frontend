@@ -24,7 +24,7 @@ export const metadata: Metadata = {
     siteName: "Bryant & Cindy Wedding",
     images: [
       {
-        url: "https://pangdingang.com/hero.jpg", // 👈 your image
+        url: "https://pangdingang.com/hero.jpg?v=2", // 👈 your image
         width: 1200,
         height: 630,
         alt: "Bryant & Cindy Wedding",
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     title: "#绑定Ang 💍",
     description: "Join us for Bryant & Cindy's Wedding!",
-    images: ["https://pangdingang.com/hero.jpg"],
+    images: ["https://pangdingang.com/hero.jpg?v=2"],
   },
 };
 
