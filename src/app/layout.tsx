@@ -18,7 +18,6 @@ export const metadata: Metadata = {
     title: "#绑定Ang 💍",
     description: "Join us for Bryant & Cindy's Wedding!",
     url: "https://pangdingang.com",
-    siteName: "Bryant & Cindy Wedding",
     images: [
       {
         url: "https://pangdingang.com/preview.jpg", // 👈 your image
