@@ -15,9 +15,10 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   // ✅ ADD THIS
   openGraph: {
-    title: "#绑定Ang 💍",
+    title: "",
     description: "Join us for Bryant & Cindy's Wedding!",
     url: "https://pangdingang.com",
+    siteName:"#绑定Ang 💍",
     images: [
       {
         url: "https://pangdingang.com/preview.jpg", // 👈 your image
