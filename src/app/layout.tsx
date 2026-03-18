@@ -13,24 +13,30 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  // ✅ ADD THIS
+  metadataBase: new URL("https://pangdingang.com"),
+
+  title: "#绑定Ang 💍",
+  description: "Join us for Bryant & Cindy's Wedding!",
+
   openGraph: {
-    title: "",
+    title: "#绑定Ang 💍",
     description: "Join us for Bryant & Cindy's Wedding!",
     url: "https://pangdingang.com",
-    siteName:"#绑定Ang 💍",
+    type: "website",
+    locale: "en_SG",
+    siteName: "#绑定Ang 💍",
     images: [
       {
-        url: "https://pangdingang.com/preview.jpg", // 👈 your image
+        url: "https://pangdingang.com/preview.jpg",
+        secureUrl: "https://pangdingang.com/preview.jpg",
         width: 1200,
-        height: 630
+        height: 630,
+        alt: "Bryant & Cindy Wedding",
+        type: "image/jpeg",
       },
     ],
-    locale: "en_SG",
-    type: "website",
   },
 
-  // ✅ ADD THIS (for better Telegram / iMessage / Twitter support)
   twitter: {
     card: "summary_large_image",
     title: "#绑定Ang 💍",
@@ -38,6 +44,7 @@ export const metadata: Metadata = {
     images: ["https://pangdingang.com/preview.jpg"],
   },
 };
+
 export default function RootLayout({
   children,
 }: Readonly<{
