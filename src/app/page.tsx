@@ -119,7 +119,7 @@ export default function HomePage() {
       setEmail("");
       setTotalGuests(1);
     } catch {
-      setStatus({ type: "error", message: "Network error. Is your backend running?" });
+      setStatus({ type: "error", message: "Network error! Please try again! 🧸" });
     } finally {
       setIsSubmitting(false);
     }
