@@ -281,7 +281,7 @@ export default function HomePage() {
         {/* RSVP */}
         <section id="rsvp" className="fade-section pb-24 pt-10 md:pb-32">
           <div className="hero-border-rsvp fade-stagger rounded-3xl border border-[#F6C453]/35 bg-white/75 p-6 text-[#5A3E2B] pooh-shadow md:p-10">
-            <h2 className="font-pagella text-[1.25rem] md:text-4xl md:tracking-[0.03em] ">Kindly RSVP by <strong className="font-pagella italic">30 April 2026</strong> ❤️</h2>
+            <h2 className="font-pagella text-[1.25rem] md:text-4xl md:tracking-[0.03em] ">Kindly RSVP by <strong className="font-pagella italic">13 May 2026</strong> ❤️</h2>
             <form onSubmit={onSubmit} className="mt-8 grid gap-4">
               <div className="grid gap-4 md:grid-cols-2">
                 <input
